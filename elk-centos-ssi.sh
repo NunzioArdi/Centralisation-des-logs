@@ -4,7 +4,16 @@
 version=0.1
 
 usage="\
-Installe elk pour centos 8
+Options:
+   --help       display this help and exit.   
+   --version    display version info and exit.
+
+   --java11      use java 11 instead of Java 8 (default)
+"
+
+info="\
+Installs ELK 7.7 for centos 8
+Script version: $version
 "
 
 function isinstalled {
@@ -17,17 +26,16 @@ function isinstalled {
 
 package_java="java-1.8.0-openjdk"
 packgae_e="elasticsearch"
-$package_k="kibana"
-$package_l="logstash"
-$mem=1G
-$ipE=localhost #unused
-$ipk=localhost #unused
-$portE=9200    #unused
-$portK=5601    #unused
-$portL=5044    #unused
+package_k="kibana"
+package_l="logstash"
+mem=1G
+ipE=localhost #unused
+ipk=localhost #unused
+portE=9200    #unused
+portK=5601    #unused
+portL=5044    #unused
 
 #test run as root user
-
 if [ "$EUID" -ne 0 ]
 	then echo "Please run as root"
 	exit 1
@@ -35,6 +43,19 @@ fi
 
 
 
+while test $# -ne 0; do
+  case $1 in
+    --help) echo "$usage"; exit $?;;
+  
+    --info) echo "$info"; exit $?;;
+
+    --java11) package_java="java-11-openjdk";;
+  esac
+  shift
+done 
+
+echo "$package_java"
+exit
 
 #1. JAVA
 
