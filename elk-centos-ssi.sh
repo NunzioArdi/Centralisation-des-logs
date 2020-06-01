@@ -1,6 +1,8 @@
 #/bin/bash
 ##TODO config intéractive, ip et mem, verifier version 
 
+version=0.1
+
 usage="\
 Installe elk pour centos 8
 "
@@ -23,6 +25,16 @@ $ipk=localhost #unused
 $portE=9200    #unused
 $portK=5601    #unused
 $portL=5044    #unused
+
+#test run as root user
+
+if [ "$EUID" -ne 0 ]
+	then echo "Please run as root"
+	exit 1
+fi
+
+
+
 
 #1. JAVA
 
