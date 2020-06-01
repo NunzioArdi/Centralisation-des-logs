@@ -54,9 +54,6 @@ while test $# -ne 0; do
   shift
 done 
 
-echo "$package_java"
-exit
-
 #1. JAVA
 
 if isinstalled $package_java; then 
@@ -103,7 +100,7 @@ EOF
     systemctl enable --now elasticsearch.service
 
     #test si fonctionne
-    if curl -XGET "localhost:9200" &>/dev/null;then echo "e work"; else echo "e doesn't work"; exit(1); fi
+    if curl -XGET "localhost:9200" &>/dev/null;then echo "e work"; else echo "e doesn't work"; exit 1; fi
 fi
 
 
@@ -124,7 +121,7 @@ else
     firewall-cmd --add-port=5601/tcp --permanent # autorisé les connection externe
     firewall-cmd --reload
     
-    if curl -XGET "localhost:5601" &>/dev/null;then echo "k work"; else echo "k doesn't work"; exit(1); fi # //TODO remplacer localhost par l'ip voulu 
+    if curl -XGET "localhost:5601" &>/dev/null;then echo "k work"; else echo "k doesn't work"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
 fi
 
 
