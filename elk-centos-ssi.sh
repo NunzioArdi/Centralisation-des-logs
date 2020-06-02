@@ -1,11 +1,11 @@
 #/bin/bash
-##TODO config intéractive, ip et mem, verifier version 
+##TODO config intéractive, ip et mem, verifier version
 
-version=0.1
+version=0.2
 
 usage="\
 Options:
-   --help       display this help and exit.   
+   --help       display this help and exit.
    --version    display version info and exit.
 
    --java11      use java 11 instead of Java 8 (default)
@@ -24,21 +24,29 @@ function isinstalled {
   fi
 }
 
-function javaOtherVersion {
-  if ! isinstalled java-"$@"-openjdk >/dev/null; then
-    java_installed = yum list installed java-*-openjdk | grep -E -o "java-[0-9.]*-openjdk"
-    echo "Version $java_installed is installed, do you whant remove this version ?"
-    while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
-      read -rp "  Remove  $$java_installed [y/n]: " -e REP_JAVA
-    done
-    if [ $REP_JAVA == "y" ]; then
-      yum remove java_installed 1>/dev/null
-      yum install java-"$@"-openjdk 1>/dev/null
+function javaInstall {
+    java_installed=$(yum list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
+    if [ $(echo $?) == "0" ]; then
+      echo "Version $java_installed is installed, do you whant remove this version ?"
+      while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
+        read -rp "  Remove $java_installed [y/n]: " -e REP_JAVA
+      done
+      if [ $REP_JAVA == "y" ]; then
+        printf "\nremove $java_installed\n"
+        yum remove -y $java_installed
+        printf "\ninstall java-"$@"-openjdk\n"
+        yum install -y java-"$@"-openjdk
+      else
+	printf "keep $java_installed\n"
+      fi
+    else
+      printf "\ninstall java-"$@"-openjdk\n"
+      yum install -y java-"$@"-openjdk
     fi
-  fi
 }
 
-package_java="java-1.8.0-openjdk"
+
+package_java="1.8.0"
 packgae_e="elasticsearch"
 package_k="kibana"
 package_l="logstash"
@@ -63,24 +71,18 @@ while test $# -ne 0; do
   
     --info) echo "$info"; exit $?;;
 
-    --java11) if ! isinstalled java-11-openjdk; then
-		javaOtherVersion 11
+    --java11) package_java="11";;
 
-
-
-
-
-package_java="java-11-openjdk";;
   esac
   shift
 done 
 
 #1. JAVA
 
-if isinstalled $package_java; then 
-    echo "$package_java déjà installé"; 
+if isinstalled java-$package_java-openjdk; then 
+    echo "java-$package_java-openjdk déjà installé"; 
 else 
-     yum -y install $package_java
+     javaInstall $package_java
 fi
 
 
