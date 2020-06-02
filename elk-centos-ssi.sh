@@ -1,7 +1,7 @@
 #/bin/bash
 ##TODO config intéractive, ip et mem, verifier version
 
-version=0.3
+version=0.4
 
 usage="\
 Options:
@@ -15,6 +15,25 @@ info="\
 Installs ELK 7.7 for centos 8
 Script version: $version
 "
+
+#Source: https://docwhat.org/bash-checking-a-port-number
+function to_int {
+    local -i num="10#${1}"
+    echo "${num}"
+}
+
+function port_is_ok {
+    local port="$1"
+    local -i port_num=$(to_int "${port}" 2>/dev/null)
+
+    if (( $port_num < 1 || $port_num > 65535 )) ; then
+        echo "*** ${port} is not a valid port" 1>&2
+        return 1
+    fi
+
+    return 0
+}
+##########################################################
 
 function isinstalled {
   if yum list installed "$@" 1>/dev/null 2>&1; then
@@ -54,15 +73,15 @@ mem=1G
 ipE=localhost #unused
 ipk=localhost #unused
 portE=9200    #unused
-portK=5601    #unused
+portK=5601
 portL=5044    #unused
+REP_PORT_VALID=1
 
 #test run as root user
 if [ "$EUID" -ne 0 ]
 	then echo "Please run as root"
 	exit 1
 fi
-
 
 
 while test $# -ne 0; do
@@ -76,6 +95,7 @@ while test $# -ne 0; do
   esac
   shift
 done 
+
 
 #1. JAVA
 if isinstalled java-$package_java-openjdk; then
@@ -121,26 +141,42 @@ EOF
     systemctl enable --now elasticsearch.service
 
     #test if works
-    if curl -XGET "localhost:9200" &>/dev/null;then echo "$package_e work"; else echo "$package_e doesn't work"; exit 1; fi
+    if curl -XGET "localhost:9200" &>/dev/null;then echo -e "\033[0;32mElasticsearch work\033[0m"; else echo -e "\033[0;33mElasticsearch doesn't work\033[0m"; exit 1; fi
 fi
 
 
-#Kibana //TODO 
-
-if isinstalled $package_k; then 
-    echo "$package_k déjà installé" 
-else 
+#3 Kibana
+if isinstalled $package_k; then
+    echo "$package_k already installed"
+else
     yum -y install $package_k
-    sed -i 's/#server.port:/server.port:/' /etc/kibana/kibana.yml #port du serveur k
-    sed -i 's/#server.host:/server.host:/' /etc/kibana/kibana.yml #ip   du serveur k //TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
-    sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml #add du serveur e pour les lié
-    
-    systemctl enable --now kibana
-    
-    firewall-cmd --add-port=5601/tcp --permanent # autorisé les connection externe
+
+    #kibana server port
+    while [[ $REP_PORT_VALID != 0  ]]; do
+        read -rp "Select external access port for Kabana [Default value: 5061]: " -e REP_PORT_TMP
+                  : ${REP_PORT_TMP:=$portK}
+        if port_is_of $REP_PORT_TMP; then 
+          REP_PORT_VALID=0
+          portK=$REP_PORT_TMP
+        fi
+    done
+    sed -i "s/#server.port: 5601/server.port: $portK/" /etc/kibana/kibana.yml
+
+    #kibana server ip
+    ip=$(hostname -I | awk '{print $1}')
+    sed -i "s/#server.host: \"localhost\"/server.host: $ip/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
+
+    #bind the kibana server to the Elasticsearch server
+    sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
+
+    #allow external connection
+    firewall-cmd --add-port=$portK/tcp --permanent
     firewall-cmd --reload
     
-    if curl -XGET "localhost:5601" &>/dev/null;then echo "k work"; else echo "k doesn't work"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
+    systemctl enable --now kibana
+
+    sleep 10
+    if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
 fi
 
 
