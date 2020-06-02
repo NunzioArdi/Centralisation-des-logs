@@ -24,6 +24,20 @@ function isinstalled {
   fi
 }
 
+function javaOtherVersion {
+  if ! isinstalled java-"$@"-openjdk >/dev/null; then
+    java_installed = yum list installed java-*-openjdk | grep -E -o "java-[0-9.]*-openjdk"
+    echo "Version $java_installed is installed, do you whant remove this version ?"
+    while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
+      read -rp "  Remove  $$java_installed [y/n]: " -e REP_JAVA
+    done
+    if [ $REP_JAVA == "y" ]; then
+      yum remove java_installed 1>/dev/null
+      yum install java-"$@"-openjdk 1>/dev/null
+    fi
+  fi
+}
+
 package_java="java-1.8.0-openjdk"
 packgae_e="elasticsearch"
 package_k="kibana"
@@ -49,7 +63,14 @@ while test $# -ne 0; do
   
     --info) echo "$info"; exit $?;;
 
-    --java11) package_java="java-11-openjdk";;
+    --java11) if ! isinstalled java-11-openjdk; then
+		javaOtherVersion 11
+
+
+
+
+
+package_java="java-11-openjdk";;
   esac
   shift
 done 
