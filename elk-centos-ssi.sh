@@ -27,20 +27,20 @@ function isinstalled {
 function javaInstall {
     java_installed=$(yum list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
     if [ $(echo $?) == "0" ]; then
-      echo "Version $java_installed is installed, do you whant remove this version ?"
+      echo "Version $java_installed is installed, do you want to remove this version ?"
       while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
-        read -rp "  Remove $java_installed [y/n]: " -e REP_JAVA
+        read -rp "Remove $java_installed [y/n]: " -e REP_JAVA
       done
       if [ $REP_JAVA == "y" ]; then
-        printf "\nremove $java_installed\n"
+        printf "\nRemove $java_installed\n"
         yum remove -y $java_installed
-        printf "\ninstall java-"$@"-openjdk\n"
+        printf "\nInstall java-"$@"-openjdk\n"
         yum install -y java-"$@"-openjdk
       else
-	printf "keep $java_installed\n"
+	printf "Keep $java_installed\n"
       fi
     else
-      printf "\ninstall java-"$@"-openjdk\n"
+      printf "\nInstall java-"$@"-openjdk\n"
       yum install -y java-"$@"-openjdk
     fi
 }
