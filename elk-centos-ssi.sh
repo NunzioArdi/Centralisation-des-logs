@@ -155,7 +155,7 @@ else
     while [[ $REP_PORT_VALID != 0  ]]; do
         read -rp "Select external access port for Kabana [Default value: 5061]: " -e REP_PORT_TMP
                   : ${REP_PORT_TMP:=$portK}
-        if port_is_of $REP_PORT_TMP; then 
+        if port_is_ok $REP_PORT_TMP; then 
           REP_PORT_VALID=0
           portK=$REP_PORT_TMP
         fi
@@ -175,7 +175,8 @@ else
     
     systemctl enable --now kibana
 
-    sleep 10
+    echo "sleep 15s"
+    sleep 15s
     if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
 fi
 
