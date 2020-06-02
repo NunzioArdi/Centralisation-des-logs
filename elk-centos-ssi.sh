@@ -1,7 +1,7 @@
 #/bin/bash
 ##TODO config intéractive, ip et mem, verifier version
 
-version=0.2
+version=0.3
 
 usage="\
 Options:
@@ -78,28 +78,22 @@ while test $# -ne 0; do
 done 
 
 #1. JAVA
-
-if isinstalled java-$package_java-openjdk; then 
-    echo "java-$package_java-openjdk déjà installé"; 
-else 
+if isinstalled java-$package_java-openjdk; then
+    echo "java-$package_java-openjdk already installed";
+else
      javaInstall $package_java
 fi
 
 
 #2 Elasticsearch 7
+if isinstalled $package_e; then
+    echo "$package_e already installed"
 
-rpm ––import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+else
+    printf "\nInstall $package_e\n"
+    rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 
-
-
-dnf update
-
-if isinstalled $package_e; then 
-    echo "$package_e déjà installé" 
-
-else 
-
-    cat <<EOF | tee /etc/yum.repos.d/elasticsearch.repo
+    cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
 [elasticstack]
 name=Elastic repository for 7.x packages
 baseurl=https://artifacts.elastic.co/packages/7.x/yum
@@ -110,23 +104,25 @@ autorefresh=1
 type=rpm-md
 EOF
 
+    dnf -y update
+
     yum -y install $package_e
-    
-    sed -i 's/#network.host: 192.168.0.1/network.host: localhost/' /etc/elasticsearch/elasticsearch.yml #restraindre l'accès (accès par k)
-    sed -i 's/#http.port: 9200/http.port: 9200' /etc/elasticsearch/elasticsearch.yml
+
+    printf "\nConfiguration\n"
+
+    sed -i 's/#network.host: 192.168.0.1/network.host: localhost/' /etc/elasticsearch/elasticsearch.yml #restrict access to Kibana
+    sed -i 's/#http.port: 9200/http.port: 9200/' /etc/elasticsearch/elasticsearch.yml
 
     #ram
-    sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options 
+    sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
     sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
-
+    
     systemctl daemon-reload
     systemctl enable --now elasticsearch.service
 
-    #test si fonctionne
-    if curl -XGET "localhost:9200" &>/dev/null;then echo "e work"; else echo "e doesn't work"; exit 1; fi
+    #test if works
+    if curl -XGET "localhost:9200" &>/dev/null;then echo "$package_e work"; else echo "$package_e doesn't work"; exit 1; fi
 fi
-
-
 
 
 #Kibana //TODO 
