@@ -1,7 +1,7 @@
 #/bin/bash
 ##TODO config intéractive, ip et mem, verifier version
 
-version=0.4
+version=0.5
 
 usage="\
 Options:
@@ -76,6 +76,7 @@ portE=9200    #unused
 portK=5601
 portL=5044    #unused
 REP_PORT_VALID=1
+REP_BOOT_VALID=1
 
 #test run as root user
 if [ "$EUID" -ne 0 ]
@@ -95,6 +96,30 @@ while test $# -ne 0; do
   esac
   shift
 done 
+
+
+#0. 
+
+sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
+
+test=$(sudo systemctl is-enabled firewalld.service)
+if [ $test == "enabled" ] ; then 
+systemctl disable firewalld
+systemctl stop firewalld
+    while [[ $REP_BOOT_VALID != 0  ]]; do
+        read -rp "OS reboot required (Y/n): " -e REP_BOOT_TMP
+	: ${REP_BOOT_TMP:="y"}
+        if [[ $REP_BOOT_TMP == "y" ]] ; then 
+          REP_BOOT_VALID=0
+          reboot
+        elif [[ $REP_BOOT_TMP == "n" ]] ; then 
+          REP_BOOT_VALID=0
+        else
+	echo "This is not a valid answer"
+        fi
+    done
+
+fi
 
 
 #1. JAVA
@@ -170,13 +195,13 @@ else
     sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
 
     #allow external connection
-    firewall-cmd --add-port=$portK/tcp --permanent
-    firewall-cmd --reload
+#    firewall-cmd --add-port=$portK/tcp --permanent
+#    firewall-cmd --reload
     
     systemctl enable --now kibana
 
-    echo "sleep 15s"
-    sleep 15s
+    echo "sleep 20s"
+    sleep 20s
     if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
 fi
 
@@ -205,8 +230,8 @@ output {
   }
 }
 EOF
-    chown --recursive logstash /var/log/logstash
-    chown --recursive logstash /var/liv/logstash
-    chmod -R 755 /usr/share/logstash
-    chmod -R 755 /var/lib/logstash
+#    chown --recursive logstash /var/log/logstash
+#    chown --recursive logstash /var/liv/logstash
+#    chmod -R 755 /usr/share/logstash
+#    chmod -R 755 /var/lib/logstash
 fi
