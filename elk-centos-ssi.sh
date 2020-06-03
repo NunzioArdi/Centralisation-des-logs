@@ -66,7 +66,7 @@ function javaInstall {
 
 
 package_java="1.8.0"
-packgae_e="elasticsearch"
+package_e="elasticsearch"
 package_k="kibana"
 package_l="logstash"
 mem=1G
@@ -88,31 +88,31 @@ fi
 while test $# -ne 0; do
   case $1 in
     --help) echo "$usage"; exit $?;;
-  
+
     --info) echo "$info"; exit $?;;
 
     --java11) package_java="11";;
 
   esac
   shift
-done 
+done
 
 
-#0. 
+#0.
 
 sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 
 test=$(sudo systemctl is-enabled firewalld.service)
-if [ $test == "enabled" ] ; then 
+if [ $test == "enabled" ] ; then
 systemctl disable firewalld
 systemctl stop firewalld
     while [[ $REP_BOOT_VALID != 0  ]]; do
         read -rp "OS reboot required (Y/n): " -e REP_BOOT_TMP
 	: ${REP_BOOT_TMP:="y"}
-        if [[ $REP_BOOT_TMP == "y" ]] ; then 
+        if [[ $REP_BOOT_TMP == "y" ]] ; then
           REP_BOOT_VALID=0
           reboot
-        elif [[ $REP_BOOT_TMP == "n" ]] ; then 
+        elif [[ $REP_BOOT_TMP == "n" ]] ; then
           REP_BOOT_VALID=0
         else
 	echo "This is not a valid answer"
@@ -157,10 +157,10 @@ EOF
 
     sed -i 's/#network.host: 192.168.0.1/network.host: localhost/' /etc/elasticsearch/elasticsearch.yml #restrict access to Kibana
     sed -i 's/#http.port: 9200/http.port: 9200/' /etc/elasticsearch/elasticsearch.yml
-
+    
     #ram
-    sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
-    sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
+#    sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
+#    sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
     
     systemctl daemon-reload
     systemctl enable --now elasticsearch.service
@@ -180,7 +180,7 @@ else
     while [[ $REP_PORT_VALID != 0  ]]; do
         read -rp "Select external access port for Kabana [Default value: 5061]: " -e REP_PORT_TMP
                   : ${REP_PORT_TMP:=$portK}
-        if port_is_ok $REP_PORT_TMP; then 
+        if port_is_ok $REP_PORT_TMP; then
           REP_PORT_VALID=0
           portK=$REP_PORT_TMP
         fi
@@ -197,7 +197,7 @@ else
     #allow external connection
 #    firewall-cmd --add-port=$portK/tcp --permanent
 #    firewall-cmd --reload
-    
+
     systemctl enable --now kibana
 
     echo "sleep 20s"
@@ -208,14 +208,14 @@ fi
 
 #Logstash
 
-if isinstalled $package_l; then 
+if isinstalled $package_l; then
     echo "$package_l déjà installé"
-else 
+else
     yum -y install $package_l
-    
+
     systemctl daemon-reload
     systemctl enable --now logstash.service
-    
+
     cat <<EOF | tee /etc/logstash/conf.d/elk.conf
 input {
   beats {
