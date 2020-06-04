@@ -85,7 +85,7 @@ if [ $need != "2" ]; then
 	exit 2
 fi
 
-#3. filebeat
+#1. filebeat
 if isinstalled $package_f; then
     echo "$package_f déjà installé";
 else
@@ -95,5 +95,7 @@ else
 
      sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
      sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
+     
+     filebeat setup -e --dashboards 
 
 fi
