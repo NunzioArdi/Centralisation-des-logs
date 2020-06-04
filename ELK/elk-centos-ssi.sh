@@ -16,53 +16,7 @@ Installs ELK 7.7 for centos 8
 Script version: $version
 "
 
-#Source: https://docwhat.org/bash-checking-a-port-number
-function to_int {
-    local -i num="10#${1}"
-    echo "${num}"
-}
-
-function port_is_ok {
-    local port="$1"
-    local -i port_num=$(to_int "${port}" 2>/dev/null)
-
-    if (( $port_num < 1 || $port_num > 65535 )) ; then
-        echo "*** ${port} is not a valid port" 1>&2
-        return 1
-    fi
-
-    return 0
-}
-##########################################################
-
-function isinstalled {
-  if yum list installed "$@" 1>/dev/null 2>&1; then
-    true
-  else
-    false
-  fi
-}
-
-function javaInstall {
-    java_installed=$(yum list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
-    if [ $(echo $?) == "0" ]; then
-      echo "Version $java_installed is installed, do you want to remove this version ?"
-      while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
-        read -rp "Remove $java_installed [y/n]: " -e REP_JAVA
-      done
-      if [ $REP_JAVA == "y" ]; then
-        printf "\nRemove $java_installed\n"
-        yum remove -y $java_installed
-        printf "\nInstall java-"$@"-openjdk\n"
-        yum install -y java-"$@"-openjdk
-      else
-	printf "Keep $java_installed\n"
-      fi
-    else
-      printf "\nInstall java-"$@"-openjdk\n"
-      yum install -y java-"$@"-openjdk
-    fi
-}
+source function #import function
 
 
 package_java="1.8.0"
