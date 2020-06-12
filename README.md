@@ -34,11 +34,10 @@ Une règle est définie par `facility.level [?]template1;template2`.<br>
 Un modèle peut être un chemin `/var/log/message` ou le nom d’un modèle. Le `?` indique un modèle de fichier dynamique.
 De nombreux [exemples](https://rsyslog-doc.readthedocs.io/en/latest/configuration/examples.html) avec leurs explications sont
 disponibles dans la documentation.<br>
-2 modèles peuvent par exemple être appliqués pour définir l’emplacement du fichier et la façon dont le message sera écrit dans
-le fichier.
+Deux modèles peuvent par exemple être appliqués pour définir l’emplacement du fichier et la façon dont le message sera écrit dans le fichier.
 Un modèle est défini par `template(parameters) { list-descriptions }`
 
-Pour avoir une structure de type `/var/log/clients/<NOM HOST>/<PROGRAMME>.log`, il suffit de rajouter au fichier de configuration
+Pour avoir une structure de type `/var/log/clients/<NOM HOST>/<PROGRAMME>.log`, il suffit de rajouter au fichier de configuration ce modèle:
 ```
 template(name="modeleFichier" type="list" {
 	constant(value="/var/log/clients/")
@@ -48,9 +47,18 @@ template(name="modeleFichier" type="list" {
 	constant(value=".log")
 }
 ```
- 
+La [liste des propriétées](https://rsyslog.readthedocs.io/en/latest/configuration/examples.html) est disponible dans la documentation.
 
 Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier
 ```
 *.* ?modeleFichier
 ```
+
+ ### Configuration client
+
+Définir l’adresse du serveur et le protocole
+```
+*. *  @<IP>:<PORT>
+```
+`@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, en mettre 2
+
