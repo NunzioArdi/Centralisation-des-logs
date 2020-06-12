@@ -58,7 +58,39 @@ Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model
 
 Définir l’adresse du serveur et le protocole
 ```
-*. *  @<IP>:<PORT>
+*.*  @<IP>:<PORT>
 ```
 `@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, en mettre 2
 
+## FileBeat
+
+### Intro
+FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs. Mais nous n'allons pas les utiliser.
+
+Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention au indentation.
+
+### Config
+
+Dans la section inputs ce trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veux. La recherche de fichier ne va pas dans les sous-repertoires.
+```yml
+filebeat.inputs:
+- type: log
+  paths:
+    # tous les logs du répertoire /var/log
+    - /var/log/*.log
+    # tous les logs qui ce trouve dans le premier dossier du répertoire /var/log
+    - /var/log/*/*.log
+  
+  # Liste des fichiers à exlure en regex
+  exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
+```
+Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est installé
+```yml
+setup.kibana
+  host: "<IP-K>:5601"
+```
+Enfin on configure l'output. Il ne peut en avoir qu'un seul.
+```yml
+output.logstash:
+  hosts: ["<IP-L>:5044"]
+```
