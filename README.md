@@ -62,6 +62,16 @@ Définir l’adresse du serveur et le protocole
 ```
 `@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, en mettre 2
 
+### RFC
+De base, les logs ne sont pas enregistrés selon la RCF 5424 ou même l'ancienne RFC 3164: les facility et les severity ne sont pas écrites: `TIMESTAMP_RFC3164 HOSTNAME PROGRAMNAME[PID]: MSG`. Pour utilisé la nouvelle RFC, il faut modifier le paramettre d'écriture par défaut.
+```
+#Pour les anciens format
+$ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
+
+# Pour les nouveau format
+module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
+```
+
 ## FileBeat
 
 ### Intro
