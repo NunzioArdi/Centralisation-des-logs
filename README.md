@@ -47,7 +47,7 @@ template(name="modeleFichier" type="list" {
 	constant(value=".log")
 }
 ```
-La [liste des propriétées](https://rsyslog.readthedocs.io/en/latest/configuration/examples.html) est disponible dans la documentation.
+La [liste des propriétées](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
 
 Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier
 ```
@@ -97,10 +97,10 @@ filebeat.inputs:
 Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est installé
 ```yml
 setup.kibana
-  host: "<IP-K>:5601"
+  host: "<IP_K>:5601"
 ```
 Enfin on configure l'output. Il ne peut en avoir qu'un seul.
 ```yml
 output.logstash:
-  hosts: ["<IP-L>:5044"]
+  hosts: ["<IP_L>:5044"]
 ```
