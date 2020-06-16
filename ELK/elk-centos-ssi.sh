@@ -1,7 +1,7 @@
 #/bin/bash
 ##TODO config intéractive, ip et mem, verifier version
 
-version=0.5
+version=0.6
 
 usage="\
 Options:
@@ -24,7 +24,7 @@ Script version: $version
 
 source function #import function
 
-
+#Variable
 package_java="1.8.0"
 package_e="elasticsearch"
 package_k="kibana"
@@ -41,6 +41,78 @@ type="client"
 sel=0
 firewall=0
 p=yum
+###############################################################################
+
+
+#test command installed
+if command -v dnf>/dev/null;then p=dnf; fi
+if command -v systemctl>/dev/null;then ;else c=service; fi
+###############################################################################
+
+
+#Function
+
+#Source: https://docwhat.org/bash-checking-a-port-number    #
+#############################################################
+function to_int {                                           #
+   local -i num="10#${1}"                                   #
+   echo "${num}"                                            #
+}                                                           #
+                                                            #
+function port_is_ok {                                       #
+   local port="$1"                                          #
+   local -i port_num=$(to_int "${port}" 2>/dev/null)        #
+                                                            #
+   if (( $port_num < 1 || $port_num > 65535 )) ; then       #
+      echo "*** ${port} is not a valid port" 1>&2           #
+      return 1                                              #
+   fi                                                       #
+                                                            #
+   return 0                                                 #
+}                                                           #
+#############################################################
+
+function isinstalled {
+   if ${com} list installed "$@" 1>/dev/null 2>&1; then
+      true
+   else
+      false
+   fi
+}
+
+function javaInstall {
+   java_installed=$(${com} list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
+   if [ $(echo $?) == "0" ]; then
+      echo "Version $java_installed is installed, do you want to remove this version ?"
+      while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
+         read -rp "Remove $java_installed [y/n]: " -e REP_JAVA
+      done
+      if [ $REP_JAVA == "y" ]; then
+         printf "\nRemove $java_installed\n"
+         ${com} remove -y $java_installed
+         printf "\nInstall java-"$@"-openjdk\n"
+         ${com} install -y java-"$@"-openjdk
+      else
+	      printf "Keep $java_installed\n"
+      fi
+   else
+      printf "\nInstall java-"$@"-openjdk\n"
+      ${com} install -y java-"$@"-openjdk
+   fi
+}
+
+function ip_is_ok {
+   re='^(0*(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))\.){3}'
+   re+='0*(1?[0-9]{1,2}|2([‌​0-4][0-9]|5[0-5]))$'
+
+   if [[ $1 =~ $re ]]; then
+      return 0
+   else
+      return 1
+   fi
+}
+###############################################################################
+
 
 #test run as root user
 if [ "$EUID" -ne 0 ]
@@ -48,8 +120,6 @@ if [ "$EUID" -ne 0 ]
 	exit 1
 fi
 
-#test if dnf is installed
-if command -v dnf>/dev/null;then p=dnf; fi
 
 while test $# -ne 0; do
   case $1 in
@@ -72,11 +142,10 @@ while test $# -ne 0; do
 done
 
 
-#0.
-
+#Security
 if [ $sel -eq 1 ]; then
 	sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
-fi<
+fi
 
 if [ $firewall -eq 1 ]; then
 	test=$(sudo systemctl is-enabled firewalld.service)
@@ -207,15 +276,17 @@ elif [ $type == "client" ];then
    if isinstalled $package_f; then
       echo "$package_f déjà installé";
    else
-       cd /tmp
-       curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
-       rpm -vi filebeat-7.7.1-x86_64.rpm
+      cd /tmp
+      curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
+      rpm -vi filebeat-7.7.1-x86_64.rpm
 
-       sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
-       sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
+      sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
+      sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
 
-       filebeat setup -e --dashboards
+      filebeat setup -e --dashboards
    fi
 
    #2.rsyslog
    echo "*.* @$ipRsys" >>/etc/rsyslog.conf
+   systemctl restart rsyslog
+fi
