@@ -1,7 +1,14 @@
 #/bin/bash
-##TODO config intéractive, ip et mem, verifier version
-
-version=0.6
+<<TODO
+    systemd et init.d
+    filebeat depuis yum
+    ram
+    ip facultative
+    vérification version package
+    rsyslog serveur
+    config beat pour rsyslog client et serveur
+TODO
+version=0.7
 
 usage="\
 Options:
@@ -15,6 +22,13 @@ Options:
    --dissable-firewall
 
    -t type	client (default), server, clientServer (client for the server)
+
+   --kibana IP PORT
+
+   --elastic IP PORT
+
+IP format IPv4 (or localhost)
+NOTE/TODO: l'ip de kibana est automatiquement redéfinit sur l'ip de la machine du réseau local
 "
 
 info="\
@@ -30,23 +44,22 @@ package_e="elasticsearch"
 package_k="kibana"
 package_l="logstash"
 mem=1G
-ipE=localhost #unused
-ipk=localhost #unused
-portE=9200    #unused
+ipE=localhost #default restrict access to Kibana
+ipk=localhost
+portE=9200
 portK=5601
-portL=5044    #unused
-REP_PORT_VALID=1
-REP_BOOT_VALID=1
+portL=5044
 type="client"
 sel=0
 firewall=0
 p=yum
+declare -i need=0
 ###############################################################################
 
 
 #test command installed
 if command -v dnf>/dev/null;then p=dnf; fi
-if command -v systemctl>/dev/null;then ;else c=service; fi
+if ! command -v systemctl>/dev/null;then c=service; fi
 ###############################################################################
 
 
@@ -62,6 +75,10 @@ function to_int {                                           #
 function port_is_ok {                                       #
    local port="$1"                                          #
    local -i port_num=$(to_int "${port}" 2>/dev/null)        #
+
+   if [ $port == "localhost" ];then
+      return 0
+   fi
                                                             #
    if (( $port_num < 1 || $port_num > 65535 )) ; then       #
       echo "*** ${port} is not a valid port" 1>&2           #
@@ -120,27 +137,60 @@ if [ "$EUID" -ne 0 ]
 	exit 1
 fi
 
-
+#arg
 while test $# -ne 0; do
-  case $1 in
-    --help) echo "$usage"; exit $?;;
+   case $1 in
+      --help) echo "$usage"; exit $?;;
 
-    --info) echo "$info"; exit $?;;
+      --info) echo "$info"; exit $?;;
 
-    --java11) package_java="11";;
+      --java11) package_java="11";;
 
-    --dissable-selinux) sel=1;;
+      --dissable-selinux) sel=1;;
 
-    --dissable-firewall) firewall=1;;
+      --dissable-firewall) firewall=1;;
 
-    -t)
-	    if [ "$2" == "server" ]; then
-		    type="server"
-	    fi;;
+      --kibana)
+         if ip_is_ok $2; then
+            if port_is_ok $3; then
+               ipK=$2
+               portK=$3
+            else
+               exit 2
+            fi
+         else
+            exit 2
+         fi
+         need=$need+1
+      ;;
+
+      --elastic)
+         if ip_is_ok $2; then
+            if port_is_ok $3; then
+               ipE=$2
+               portE=$3
+            else
+               exit 2
+            fi
+         else
+            exit 2
+         fi
+         need=$need+1
+      ;;
+
+      -t)
+	      if [ "$2" == "server" ]; then
+		      type="server"
+	      fi
+      ;;
   esac
   shift
 done
 
+if [ $need -ne "2" ]; then
+	echo -e  "\033[0;33m--elastic && --kibana\033[0m"
+	exit 2
+fi
 
 #Security
 if [ $sel -eq 1 ]; then
@@ -192,8 +242,8 @@ EOF
 
       printf "\nConfiguration\n"
 
-      sed -i 's/#network.host: 192.168.0.1/network.host: localhost/' /etc/elasticsearch/elasticsearch.yml #restrict access to Kibana
-      sed -i 's/#http.port: 9200/http.port: 9200/' /etc/elasticsearch/elasticsearch.yml
+      sed -i "s/#network.host: 192.168.0.1/network.host: $ipE/" /etc/elasticsearch/elasticsearch.yml
+      sed -i "s/#http.port: 9200/http.port: $portE/" /etc/elasticsearch/elasticsearch.yml
 
       #ram
 #      sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
@@ -205,7 +255,7 @@ EOF
       #test if works
       printf "\nTest if Elasticsearch works (sleep 10s)\n"
       sleep 10
-      if curl -XGET "localhost:9200" &>/dev/null;then echo -e "\033[0;32mElasticsearch work\033[0m"; else echo -e "\033[0;31mElasticsearch doesn't work\033[0m"; exit 1; fi
+      if curl -XGET "localhost:9200" &>/dev/null;then echo -e "\033[0;32mElasticsearch work\033[0m"; else echo -e "\033[0;31mElasticsearch doesn't work\033[0m"; exit 3; fi
 fi
 
 
@@ -216,33 +266,28 @@ fi
       ${p} -y install $package_k
 
       #kibana server port
-      while [[ $REP_PORT_VALID != 0  ]]; do
-         read -rp "Select external access port for Kabana [Default value: 5061]: " -e REP_PORT_TMP
-                   : ${REP_PORT_TMP:=$portK}
-         if port_is_ok $REP_PORT_TMP; then
-            REP_PORT_VALID=0
-            portK=$REP_PORT_TMP
-         fi
-      done
       sed -i "s/#server.port: 5601/server.port: $portK/" /etc/kibana/kibana.yml
 
       #kibana server ip
-      ip=$(hostname -I | awk '{print $1}')
+#      ip=$(hostname -I | awk '{print $1}')
+      ip=$(hostname -i)
       sed -i "s/#server.host: \"localhost\"/server.host: $ip/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
 
-      #bind the kibana server to the Elasticsearch server
+      #bind the kibana server to the local Elasticsearch server
       sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
 
       #allow external connection
-#      firewall-cmd --add-port=$portK/tcp --permanent
-#      firewall-cmd --reload
+      if [ $firewall -eq 0 ]; then
+         firewall-cmd --add-port=$portK/tcp --permanent
+         firewall-cmd --reload
+      fi
 
       systemctl enable --now kibana
 
       printf "\nTest if Elasticsearch works (sleep 30s)\n"
       echo "sleep 30s"
       sleep 20s
-      if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 1 ; fi # //TODO remplacer localhost par l'ip voulu 
+      if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 3 ; fi # //TODO remplacer localhost par l'ip voulu
    fi
 
    #Logstash
@@ -252,8 +297,11 @@ fi
    else
       ${p} -y install $package_l
 
-      systemctl daemon-reload
-      systemctl enable --now logstash.service
+      #allow external connection
+      if [ $firewall -eq 0 ]; then
+         firewall-cmd --add-port=$portL/tcp --permanent
+         firewall-cmd --reload
+      fi
 
       cat <<EOF | tee /etc/logstash/conf.d/elk.conf
 input {
@@ -269,7 +317,10 @@ output {
   }
 }
 EOF
-    fi
+
+      systemctl daemon-reload
+      systemctl enable --now logstash.service
+   fi
 
 elif [ $type == "client" ];then
    #1. filebeat
