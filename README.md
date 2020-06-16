@@ -72,6 +72,19 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
 
+### Plus loins
+La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients
+```
+template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
+if $fromhost-ip == '127.0.0.1' then {
+  action(type="omfile" dynafile="LocalFile")
+  stop
+}
+*.* ?modeleFichier
+```
+Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `stop` signifie que le log s'arrête ici et ne continue pas les autres règles.
+
+
 ## FileBeat
 
 ### Intro
