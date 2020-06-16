@@ -7,6 +7,7 @@
     vérification version package
     rsyslog serveur
     config beat pour rsyslog client et serveur
+    usage: ./elk [type] [option] (type: elk, rsyslog, client)
 TODO
 version=0.7
 
@@ -32,7 +33,7 @@ NOTE/TODO: l'ip de kibana est automatiquement redéfinit sur l'ip de la machine 
 "
 
 info="\
-Installs ELK 7.7 for centos 8
+Installs ELK 7 for centos 8
 Script version: $version
 "
 
