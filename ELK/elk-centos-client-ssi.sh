@@ -80,8 +80,8 @@ while test $# -ne 0; do
 done
 
 #0.
-if [ $need != "2" ]; then
-	echo -e  "\033[0;33m--Elastic && --kibana\033[0m"
+if [ $need -ne "2" ]; then
+	echo -e  "\033[0;33m--elastic && --kibana\033[0m"
 	exit 2
 fi
 
