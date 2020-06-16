@@ -1,0 +1,26 @@
+﻿FACILITYNOMBRE \b(?:[0-9]|1[0-9]|2[0-3])\b     -> les nombre valide pour la facility de syslog [RFC5424]
+
+
+<78>1 2020-06-11T12:15:01+02:00 06Praline CROND 9703 - -  (root) CMD (php /var/www/html/syslog-ng/scripts/reloadcache.php >> /var/log/php-syslog-ng/reloadcache.log 2>&1 > /dev/null)
+https://grokdebug.herokuapp.com/
+%{SYSLOG5424LINE}
+
+https://grokdebug.herokuapp.com/
+https://rsyslog.readthedocs.io/en/latest/configuration/properties.html
+https://www.elastic.co/fr/blog/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04
+https://askubuntu.com/questions/772654/rsyslog-server-saves-logs-from-remote-also-in-var-syslog
+https://docs.google.com/document/d/1lEpMka1-C2_UQQCQyZcDsCgc7ZrrULbU/edit#heading=h.pmgns1pf7oe1
+https://www.elastic.co/guide/en/logstash/current/plugins-outputs-syslog.html#
+https://github.com/logstash-plugins/logstash-input-syslog/issues/15
+https://qbox.io/blog/logstash-grok-filter-tutorial-patterns
+
+
+
+#patern RFC
+https://discuss.elastic.co/t/centos-7-rsyslog-logstash-6-3-0-on-logstash-output-always-severity-code-5-and-facility-code-1-2/140265
+https://github.com/logstash-plugins/logstash-input-syslog/issues/15
+
+
+
+#perso
+https://www.bortzmeyer.org/
