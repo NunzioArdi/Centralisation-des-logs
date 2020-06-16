@@ -8,7 +8,15 @@ Options:
    --help       display this help and exit.
    --version    display version info and exit.
 
-   --java11      use java 11 instead of Java 8 (default)
+   --java11     use java 11 instead of Java 8 (default)
+
+   --dissable-selinux
+
+   --dissable-firewall
+
+   -t type	client (default), server, clientServer (client for the server)
+
+   
 "
 
 info="\
@@ -31,6 +39,9 @@ portK=5601
 portL=5044    #unused
 REP_PORT_VALID=1
 REP_BOOT_VALID=1
+type="client"
+sel=0
+firewall=0
 
 #test run as root user
 if [ "$EUID" -ne 0 ]
@@ -47,6 +58,14 @@ while test $# -ne 0; do
 
     --java11) package_java="11";;
 
+    --dissable-selinux) sel=1;;
+
+    --dissable-firewall) firewall=1;;
+
+    -t)
+	    if [ "$2" == "server" ]; then
+		    type="server"
+	    fi;; 
   esac
   shift
 done
@@ -54,25 +73,16 @@ done
 
 #0.
 
-sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
+if [ $sel -eq 1 ]; then
+	sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
+fi
 
-test=$(sudo systemctl is-enabled firewalld.service)
-if [ $test == "enabled" ] ; then
-systemctl disable firewalld
-systemctl stop firewalld
-    while [[ $REP_BOOT_VALID != 0  ]]; do
-        read -rp "OS reboot required (Y/n): " -e REP_BOOT_TMP
-	: ${REP_BOOT_TMP:="y"}
-        if [[ $REP_BOOT_TMP == "y" ]] ; then
-          REP_BOOT_VALID=0
-          reboot
-        elif [[ $REP_BOOT_TMP == "n" ]] ; then
-          REP_BOOT_VALID=0
-        else
-	echo "This is not a valid answer"
-        fi
-    done
-
+if [ $firewall -eq 1 ]; then
+	test=$(sudo systemctl is-enabled firewalld.service)
+	if [ $test == "enabled" ] ; then
+		systemctl disable firewalld
+		systemctl stop firewalld
+	fi
 fi
 
 
