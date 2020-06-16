@@ -22,7 +22,7 @@ Installs ELK 7.7 for centos 8
 Script version: $version
 "
 
-source function #import function
+#source function #import function
 
 #Variable
 package_java="1.8.0"
