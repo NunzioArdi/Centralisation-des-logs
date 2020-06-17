@@ -329,8 +329,6 @@ input {
 output {
   elasticsearch {
     hosts => ["localhost:9200"]
-    sniffing => true
-    manage_template => false
   }
 }
 EOF
