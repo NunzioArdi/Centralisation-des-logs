@@ -222,8 +222,8 @@ if [ $type == "server" ];then
    #1. JAVA
    if isinstalled java-$package_java-openjdk; then
       echo "java-$package_java-openjdk already installed";
-      if isUpToDate java-$package_java-openjdk; then
-         ${com} update java-$package_java-openjdk
+      if isUpToDate java-$package_java-openjdk; then 
+         ${com} update java-$package_java-openjdk; fi
    else
       javaInstall $package_java
    fi
@@ -232,7 +232,7 @@ if [ $type == "server" ];then
    #2 Elasticsearch 7
    if isinstalled $package_e; then
       echo "$package_e already installed"
-      if isUpToDate $package_e; then ${com} $package_e; fi
+      if isUpToDate $package_e; then ${com} $package_e;  fi
    else
       printf "\nInstall $package_e\n"
       rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
