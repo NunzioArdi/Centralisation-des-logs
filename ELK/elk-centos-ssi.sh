@@ -215,6 +215,22 @@ if [ $firewall -eq 1 ]; then
 	fi
 fi
 
+#repo
+printf "\nInstall repo Elastic 7.x\n"
+rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+#removeKey
+#rpm -e $(rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n' | grep -oP '.*(?=gpg\(Elasticsearch)')
+cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
+[elasticstack]
+name=Elastic repository for 7.x packages
+baseurl=https://artifacts.elastic.co/packages/7.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+${p} -q check-update
 
 #Server
 if [ $type == "server" ];then
@@ -235,21 +251,6 @@ if [ $type == "server" ];then
       if isUpToDate $package_e; then ${com} $package_e;  fi
    else
       printf "\nInstall $package_e\n"
-      rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
-
-      cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
-[elasticstack]
-name=Elastic repository for 7.x packages
-baseurl=https://artifacts.elastic.co/packages/7.x/yum
-gpgcheck=1
-gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
-enabled=1
-autorefresh=1
-type=rpm-md
-EOF
-
-      ${p} -q check-update
-
       ${p} -y install $package_e
 
       printf "\nConfiguration\n"
@@ -276,6 +277,7 @@ fi
       echo "$package_k already installed"
       if isUpToDate $package_k; then ${com} $package_k; fi
    else
+      printf "\nInstall $package_k\n"
       ${p} -y install $package_k
 
       #kibana server port
@@ -309,6 +311,7 @@ fi
       echo "$package_l déjà installé"
       if isUpToDate $package_l; then ${com} $package_l; fi
    else
+      printf "\nInstall $package_l\n"
       ${p} -y install $package_l
 
       #allow external connection
@@ -336,12 +339,13 @@ EOF
       systemctl enable --now logstash.service
    fi
 
-elif [ $type == "client" ];then
+else
    #1. filebeat
    if isinstalled $package_f; then
       echo "$package_f already installed";
       if isUpToDate $package_f; then ${com} $package_f; fi
    else
+      printf "\nInstall $package_f\n"
       cd /tmp
       curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
       rpm -vi filebeat-7.7.1-x86_64.rpm
