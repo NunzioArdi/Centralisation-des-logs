@@ -26,3 +26,5 @@ https://github.com/logstash-plugins/logstash-input-syslog/issues/15
 https://www.bortzmeyer.org/
 
 Console sur web: https://www.cyberciti.biz/faq/install-activate-cockpit-the-web-console-on-rhel-8/
+test script bash: bash -n scriptname
+grep -P: https://perlmaven.com/regex-cheat-sheet
