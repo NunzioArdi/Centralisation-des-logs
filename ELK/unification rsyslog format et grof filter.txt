@@ -24,3 +24,5 @@ https://github.com/logstash-plugins/logstash-input-syslog/issues/15
 
 #perso
 https://www.bortzmeyer.org/
+
+Console sur web: https://www.cyberciti.biz/faq/install-activate-cockpit-the-web-console-on-rhel-8/
