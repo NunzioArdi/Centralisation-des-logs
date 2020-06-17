@@ -33,7 +33,7 @@ NOTE/TODO: l'ip de kibana est automatiquement redéfinit sur l'ip de la machine 
 "
 
 info="\
-Installs ELK 7 for centos 8
+Installs ELK 7  for centos 8
 Script version: $version
 "
 
@@ -91,7 +91,16 @@ function port_is_ok {                                       #
 #############################################################
 
 function isinstalled {
-   if ${com} list installed "$@" 1>/dev/null 2>&1; then
+   if ${com} list installed "$@" 1>/dev/null; then
+      true
+   else
+      false
+   fi
+}
+
+function isUpToDate {
+   ${com} check-update "$@" 1>/dev/null
+   if [ $? -eq 100 ];then
       true
    else
       false
@@ -213,6 +222,8 @@ if [ $type == "server" ];then
    #1. JAVA
    if isinstalled java-$package_java-openjdk; then
       echo "java-$package_java-openjdk already installed";
+      if isUpToDate java-$package_java-openjdk; then
+         ${com} update java-$package_java-openjdk
    else
       javaInstall $package_java
    fi
@@ -221,7 +232,7 @@ if [ $type == "server" ];then
    #2 Elasticsearch 7
    if isinstalled $package_e; then
       echo "$package_e already installed"
-
+      if isUpToDate $package_e; then ${com} $package_e; fi
    else
       printf "\nInstall $package_e\n"
       rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
@@ -263,6 +274,7 @@ fi
    #3 Kibana
    if isinstalled $package_k; then
       echo "$package_k already installed"
+      if isUpToDate $package_k; then ${com} $package_k; fi
    else
       ${p} -y install $package_k
 
@@ -271,7 +283,7 @@ fi
 
       #kibana server ip
 #      ip=$(hostname -I | awk '{print $1}')
-      ip=$(hostname -i)
+      local ip=$(hostname -i)
       sed -i "s/#server.host: \"localhost\"/server.host: $ip/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
 
       #bind the kibana server to the local Elasticsearch server
@@ -295,6 +307,7 @@ fi
 
    if isinstalled $package_l; then
       echo "$package_l déjà installé"
+      if isUpToDate $package_l; then ${com} $package_l; fi
    else
       ${p} -y install $package_l
 
@@ -326,11 +339,13 @@ EOF
 elif [ $type == "client" ];then
    #1. filebeat
    if isinstalled $package_f; then
-      echo "$package_f déjà installé";
+      echo "$package_f already installed";
+      if isUpToDate $package_f; then ${com} $package_f; fi
    else
       cd /tmp
       curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
       rpm -vi filebeat-7.7.1-x86_64.rpm
+      rm -f filebeat-7.7.1-x86_64.rpm
 
       sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
       sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
