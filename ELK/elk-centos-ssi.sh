@@ -3,92 +3,109 @@
     systemd et init.d
     filebeat depuis yum
     ram
-    ip facultative
     vérification version package
     rsyslog serveur
     config beat pour rsyslog client et serveur
-    usage: ./elk [type] [option] (type: elk, rsyslog, client)
 TODO
-version=0.7
 
-usage="\
+version=0.8
+
+showHelp() {
+cat <<EOF
+./elk-centos [SETUP] [OPTIONS...]
+
+Help:
+   -h, --help		   display this help and exit.
+   -v, --version	   display version info and exit.
+
+Setup type:
+   --elkserver		   install elk server
+   --rsyserver 		   install rsyslog server
+   --client                install client
+
 Options:
-   --help       display this help and exit.
-   --version    display version info and exit.
-
-   --java11     use java 11 instead of Java 8 (default)
-
-   --dissable-selinux
-
+   --portl=PORT		   set logstash input port [5044]
+   --portk=PORT		   set kibana port [5601]
+   --porte=PORT		   set elasticsearch port [9200]
+   --portr=PORT		   set rsyslog port [514]
+   --ipk=IPv4		   set kibana access ip ["local ip"]
+   --ipe=IPv4		   set elasticsearch access ip [localhost]
+   --ipr=IPv4		   set the rsyslog ip
+   --systrans=PROTOCOL	   set protocol tranport (UDP|TCP) [UDP]
+   --java11                use java 11 instead of Java 8
+   --dissable-selinux      need reboot
    --dissable-firewall
+EOF
+exit 0
+}
 
-   -t type	client (default), server, clientServer (client for the server)
-
-   --kibana IP PORT
-
-   --elastic IP PORT
-
-IP format IPv4 (or localhost)
-NOTE/TODO: l'ip de kibana est automatiquement redéfinit sur l'ip de la machine du réseau local
-"
-
-info="\
-Installs ELK 7  for centos 8
+showInfo(){
+cat <<EOF
+Install ELK stack v7 for centos
 Script version: $version
-"
+EOF
+exit 0;
+}
+###############################################################################
 
-#source function #import function
+
 
 #Variable
-package_java="1.8.0"
+setT=false
+type=
+p=yum
+declare -i need=0
+
+javaVersion="1.8.0"
 package_e="elasticsearch"
 package_k="kibana"
 package_l="logstash"
+
 mem=1G
 ipE=localhost #default restrict access to Kibana
-ipk=localhost
-portE=9200
-portK=5601
-portL=5044
-type="client"
-sel=0
-firewall=0
-p=yum
-declare -i need=0
+ipK=localhost
+ipR=
+ipLocal=
+declare -i portE=9200
+declare -i portK=5601
+declare -i portL=5044
+declare -i portR=514
+rProtocol=
+
+disableSel=false
+disableFirewall=false
 ###############################################################################
 
 
-#test command installed
-if command -v dnf>/dev/null;then p=dnf; fi
-if ! command -v systemctl>/dev/null;then c=service; fi
+
+
+if command -v dnf>/dev/null;then p=dnf; fi #if dnf not exist, used yum
+if ! command -v systemctl>/dev/null;then c=service; fi #TODOif systemd not exist, used init.d
+ipLocal=$(hostname -i)
 ###############################################################################
+
 
 
 #Function
 
-#Source: https://docwhat.org/bash-checking-a-port-number    #
-#############################################################
-function to_int {                                           #
-   local -i num="10#${1}"                                   #
-   echo "${num}"                                            #
-}                                                           #
-                                                            #
-function port_is_ok {                                       #
-   local port="$1"                                          #
-   local -i port_num=$(to_int "${port}" 2>/dev/null)        #
+#Source: https://docwhat.org/bash-checking-a-port-number
+function to_int {
+   local -i num="10#${1}"
+   echo "${num}"
+}
 
-   if [ $port == "localhost" ];then
-      return 0
+function port_is_ok {
+   local port="$1"
+   local -i port_num=$(to_int "${port}" 2>/dev/null)
+
+   if (( $port_num < 1 || $port_num > 65535 )) ; then
+      argErr "*** ${port} is not a valid port"
+      return 1
    fi
-                                                            #
-   if (( $port_num < 1 || $port_num > 65535 )) ; then       #
-      echo "*** ${port} is not a valid port" 1>&2           #
-      return 1                                              #
-   fi                                                       #
-                                                            #
-   return 0                                                 #
-}                                                           #
-#############################################################
+
+   return 0
+}
+
 
 function isinstalled {
    if ${com} list installed "$@" 1>/dev/null; then
@@ -108,19 +125,19 @@ function isUpToDate {
 }
 
 function javaInstall {
-   java_installed=$(${com} list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
+   javaInstalled=$(${com} list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
    if [ $(echo $?) == "0" ]; then
-      echo "Version $java_installed is installed, do you want to remove this version ?"
+      echo "Version $javaInstalled is installed, do you want to remove this version ?"
       while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
-         read -rp "Remove $java_installed [y/n]: " -e REP_JAVA
+         read -rp "Remove $javaInstalled [y/n]: " -e REP_JAVA
       done
       if [ $REP_JAVA == "y" ]; then
-         printf "\nRemove $java_installed\n"
+         printf "\nRemove $javaInstalled\n"
          ${com} remove -y $java_installed
          printf "\nInstall java-"$@"-openjdk\n"
          ${com} install -y java-"$@"-openjdk
       else
-	      printf "Keep $java_installed\n"
+	      printf "Keep $javaInstalled\n"
       fi
    else
       printf "\nInstall java-"$@"-openjdk\n"
@@ -132,70 +149,84 @@ function ip_is_ok {
    re='^(0*(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))\.){3}'
    re+='0*(1?[0-9]{1,2}|2([‌​0-4][0-9]|5[0-5]))$'
 
+   if [ "$1" == "localhost" ];then
+      return 0
+   fi
+
    if [[ $1 =~ $re ]]; then
       return 0
    else
+      argErr "*** $1 is not a valid ip"
       return 1
    fi
 }
-###############################################################################
+
+setType(){
+   if [ "$setT" = false ];then
+      if [ "$1" = "--elkserver" ];then type="elkserver"; fi
+      if [ "$1" = "--rsyserver" ];then type="rsyserver"; fi
+      if [ "$1" = "--client" ];then type="client"; fi
+      setT=true
+   else
+      >&2 echo "There can be only one type argument."
+      echo "See $0 --help for used $1"
+      exit 1
+   fi
+
+}
+
+argErr(){
+  echo "$1"
+  exit 1
+}
+################################################################################
 
 
-#test run as root user
-if [ "$EUID" -ne 0 ]
-	then echo "Please run as root"
-	exit 1
-fi
 
 #arg
-while test $# -ne 0; do
-   case $1 in
-      --help) echo "$usage"; exit $?;;
-
-      --info) echo "$info"; exit $?;;
-
-      --java11) package_java="11";;
-
-      --dissable-selinux) sel=1;;
-
-      --dissable-firewall) firewall=1;;
-
-      --kibana)
-         if ip_is_ok $2; then
-            if port_is_ok $3; then
-               ipK=$2
-               portK=$3
-            else
-               exit 2
-            fi
-         else
-            exit 2
-         fi
-         need=$need+1
+for opt do
+   optval="${opt#*=}"
+   case "$opt" in
+      --dissable-firewall) disableFirewall=1
       ;;
-
-      --elastic)
-         if ip_is_ok $2; then
-            if port_is_ok $3; then
-               ipE=$2
-               portE=$3
-            else
-               exit 2
-            fi
-         else
-            exit 2
-         fi
-         need=$need+1
+      --dissable-selinux) disableSel=true
       ;;
-
-      -t)
-	      if [ "$2" == "server" ]; then
-		      type="server"
-	      fi
+      --elkserver|--rsyserver|--client) setType $opt
       ;;
+      --help|-h) showHelp
+      ;;
+      --ipe=*) if ip_is_ok $optval;then ipE=$optval; fi
+      ;;
+      --ipk=*) if ip_is_ok $optval;then ipK=$optval; fi
+      ;;
+      --ipr=*) if ip_is_ok $optval;then ipR=$optval; fi
+      ;;
+      --java11) javaVersion="11"
+      ;;
+      --porte=*) if port_is_ok $optval;then portE=$optval; fi
+      ;;
+      --portk=*) if port_is_ok $optval;then portK=$optval; fi
+      ;;
+      --portl=*) if port_is_ok $optval;then portL=$optval; fi
+      ;;
+      --portr=*) if port_is_ok $optval;then portR=$optval; fi
+      ;;
+      --version|-v) showInfo
+      ;;
+      *)
+         echo "Unknown option $1, ignored"
+         ;;
+
   esac
-  shift
 done
+echo $portL $portK $portE $javaVersion $ipE $ipK $ipR
+exit 1000
+#test run as root user
+if [ "$EUID" -ne 0 ]
+        then echo "Please run as root"
+        exit 1
+fi
+
 
 if [ $need -ne "2" ]; then
 	echo -e  "\033[0;33m--elastic && --kibana\033[0m"
@@ -203,11 +234,11 @@ if [ $need -ne "2" ]; then
 fi
 
 #Security
-if [ $sel -eq 1 ]; then
+if $disableSel; then
 	sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 fi
 
-if [ $firewall -eq 1 ]; then
+if $disableFirewall; then
 	test=$(sudo systemctl is-enabled firewalld.service)
 	if [ $test == "enabled" ] ; then
 		systemctl disable firewalld
@@ -236,12 +267,12 @@ ${p} -q check-update
 if [ $type == "server" ];then
 
    #1. JAVA
-   if isinstalled java-$package_java-openjdk; then
-      echo "java-$package_java-openjdk already installed";
-      if isUpToDate java-$package_java-openjdk; then 
-         ${com} update java-$package_java-openjdk; fi
+   if isinstalled java-$javaVersion-openjdk; then
+      echo "java-$javaVersion-openjdk already installed";
+      if isUpToDate java-$javaVersion-openjdk; then 
+         ${com} update java-$javaVersion-openjdk; fi
    else
-      javaInstall $package_java
+      javaInstall $javaVersion
    fi
 
 
@@ -292,7 +323,7 @@ fi
       sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
 
       #allow external connection
-      if [ $firewall -eq 0 ]; then
+      if $disableFirewall; then
          firewall-cmd --add-port=$portK/tcp --permanent
          firewall-cmd --reload
       fi
@@ -315,7 +346,7 @@ fi
       ${p} -y install $package_l
 
       #allow external connection
-      if [ $firewall -eq 0 ]; then
+      if $disableFirewall; then
          firewall-cmd --add-port=$portL/tcp --permanent
          firewall-cmd --reload
       fi
