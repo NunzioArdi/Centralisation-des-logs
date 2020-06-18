@@ -112,7 +112,7 @@ function port_is_ok {
 
 
 function isinstalled {
-   if ${com} list installed "$@" 1>/dev/null; then
+   if ${p} list installed "$@" 1>/dev/null; then
       true
    else
       false
@@ -120,7 +120,7 @@ function isinstalled {
 }
 
 function isUpToDate {
-   ${com} check-update "$@" 1>/dev/null
+   ${p} check-update "$@" 1>/dev/null
    if [ $? -eq 100 ];then
       true
    else
@@ -129,7 +129,7 @@ function isUpToDate {
 }
 
 function javaInstall {
-   javaInstalled=$(${com} list installed java-*-openjdk 2>/dev/null | grep \
+   javaInstalled=$(${p} list installed java-*-openjdk 2>/dev/null | grep \
       -E -o "java-[0-9.]*-openjdk")
    if [ $(echo $?) == "0" ]; then
       echo "Version $javaInstalled is installed, do you want to remove this version ?"
@@ -138,15 +138,15 @@ function javaInstall {
       done
       if [ $REP_JAVA == "y" ]; then
          printf "\nRemove $javaInstalled\n"
-         ${com} remove -y $java_installed
+         ${p} remove -y $java_installed
          printf "\nInstall java-"$@"-openjdk\n"
-         ${com} install -y java-"$@"-openjdk
+         ${p} install -y java-"$@"-openjdk
       else
 	      printf "Keep $javaInstalled\n"
       fi
    else
       printf "\nInstall java-"$@"-openjdk\n"
-      ${com} install -y java-"$@"-openjdk
+      ${p} install -y java-"$@"-openjdk
    fi
 }
 
@@ -326,7 +326,7 @@ if [ $type == "elkserver" ];then
    if isinstalled java-$javaVersion-openjdk; then
       echo "java-$javaVersion-openjdk already installed";
       if isUpToDate java-$javaVersion-openjdk; then 
-         ${com} update java-$javaVersion-openjdk; fi
+         ${p} update java-$javaVersion-openjdk; fi
    else
       javaInstall $javaVersion
    fi
@@ -335,7 +335,7 @@ if [ $type == "elkserver" ];then
    #Elasticsearch
    if isinstalled $package_e; then
       echo "$package_e already installed"
-      if isUpToDate $package_e; then ${com} $package_e;  fi
+      if isUpToDate $package_e; then ${p} $package_e;  fi
    else
       printf "\nInstall $package_e\n"
       ${p} -y install $package_e
@@ -366,7 +366,7 @@ fi
    #Kibana
    if isinstalled $package_k; then
       echo "$package_k already installed"
-      if isUpToDate $package_k; then ${com} $package_k; fi
+      if isUpToDate $package_k; then ${p} $package_k; fi
    else
       printf "\nInstall $package_k\n"
       ${p} -y install $package_k
@@ -403,7 +403,7 @@ fi
    #Logstash
    if isinstalled $package_l; then
       echo "$package_l already installed"
-      if isUpToDate $package_l; then ${com} $package_l; fi
+      if isUpToDate $package_l; then ${p} $package_l; fi
    else
       printf "\nInstall $package_l\n"
       ${p} -y install $package_l
@@ -441,7 +441,7 @@ else
    #1. filebeat
    if isinstalled $package_f; then
       echo "$package_f already installed";
-      if isUpToDate $package_f; then ${com} $package_f; fi
+      if isUpToDate $package_f; then ${p} $package_f; fi
    else
       printf "\nInstall $package_f\n"
       #cd /tmp
