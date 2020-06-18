@@ -8,7 +8,7 @@
     config beat pour rsyslog client et serveur
 TODO
 
-version=0.8
+version=0.8a
 
 showHelp() {
 cat <<EOF
@@ -24,17 +24,17 @@ Setup type:
    --client                install client
 
 Options:
-   --portl=PORT		   set logstash input port [5044]
-   --portk=PORT		   set kibana port [5601]
-   --porte=PORT		   set elasticsearch port [9200]
-   --portr=PORT		   set rsyslog port [514]
-   --ipk=IPv4		   set kibana access ip ["local ip"]
-   --ipe=IPv4		   set elasticsearch access ip [localhost]
-   --ipr=IPv4		   set the rsyslog ip
-   --systrans=PROTOCOL	   set protocol tranport (UDP|TCP) [UDP]
-   --java11                use java 11 instead of Java 8
-   --dissable-selinux      need reboot
    --dissable-firewall
+   --dissable-selinux      need reboot
+   --ipe=IPv4		   set elasticsearch access ip [localhost]
+   --ipk=IPv4		   set kibana access ip ["local ip"]
+   --ipr=IPv4		   set the rsyslog ip
+   --java11                use java 11 instead of Java 8
+   --porte=PORT		   set elasticsearch port [9200]
+   --portk=PORT		   set kibana port [5601]
+   --portl=PORT		   set logstash input port [5044]
+   --portr=PORT		   set rsyslog port [514]
+   --systrans=PROTOCOL	   set protocol tranport (UDP|TCP) [UDP]
 EOF
 exit 0
 }
@@ -42,19 +42,19 @@ exit 0
 showInfo(){
 cat <<EOF
 Install ELK stack v7 for centos
+Support centos 7 and 8 (systemd)
+Centos 6 (init.d) is planned to be supported
 Script version: $version
 EOF
 exit 0;
 }
-###############################################################################
+################################################################################
 
 
 
 #Variable
-setT=false
 type=
 p=yum
-declare -i need=0
 
 javaVersion="1.8.0"
 package_e="elasticsearch"
@@ -63,26 +63,27 @@ package_l="logstash"
 
 mem=1G
 ipE=localhost #default restrict access to Kibana
-ipK=localhost
+ipK=
 ipR=
 ipLocal=
 declare -i portE=9200
 declare -i portK=5601
 declare -i portL=5044
 declare -i portR=514
-rProtocol=
+rProtocol="UDP"
 
 disableSel=false
 disableFirewall=false
-###############################################################################
+################################################################################
 
 
 
 
 if command -v dnf>/dev/null;then p=dnf; fi #if dnf not exist, used yum
-if ! command -v systemctl>/dev/null;then c=service; fi #TODOif systemd not exist, used init.d
+if ! command -v systemctl>/dev/null;then c=service; fi 
+#TODOif systemd not exist, used init.d
 ipLocal=$(hostname -i)
-###############################################################################
+################################################################################
 
 
 
@@ -125,7 +126,8 @@ function isUpToDate {
 }
 
 function javaInstall {
-   javaInstalled=$(${com} list installed java-*-openjdk 2>/dev/null | grep -E -o "java-[0-9.]*-openjdk")
+   javaInstalled=$(${com} list installed java-*-openjdk 2>/dev/null | grep \
+      -E -o "java-[0-9.]*-openjdk")
    if [ $(echo $?) == "0" ]; then
       echo "Version $javaInstalled is installed, do you want to remove this version ?"
       while [[ $REP_JAVA != "y" && $REP_JAVA != "n" ]]; do
@@ -145,7 +147,7 @@ function javaInstall {
    fi
 }
 
-function ip_is_ok {
+ipIsOk(){
    re='^(0*(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))\.){3}'
    re+='0*(1?[0-9]{1,2}|2([‌​0-4][0-9]|5[0-5]))$'
 
@@ -162,11 +164,10 @@ function ip_is_ok {
 }
 
 setType(){
-   if [ "$setT" = false ];then
-      if [ "$1" = "--elkserver" ];then type="elkserver"; fi
-      if [ "$1" = "--rsyserver" ];then type="rsyserver"; fi
-      if [ "$1" = "--client" ];then type="client"; fi
-      setT=true
+   if [[ -z "$type" ]];then
+      if [ "$1" == "--elkserver" ];then type="elkserver"; fi
+      if [ "$1" == "--rsyserver" ];then type="rsyserver"; fi
+      if [ "$1" == "--client" ];then type="client"; fi
    else
       >&2 echo "There can be only one type argument."
       echo "See $0 --help for used $1"
@@ -175,8 +176,16 @@ setType(){
 
 }
 
+protocolIsOk(){
+   if [ "$1" == "UDP"] || [ "$1" == "TCP" ];then
+      return 0
+   else
+      argErr "*** $1 is not a valid protocol"
+      return 1
+}
+
 argErr(){
-  echo "$1"
+  echo -e "$1"
   exit 1
 }
 ################################################################################
@@ -195,11 +204,11 @@ for opt do
       ;;
       --help|-h) showHelp
       ;;
-      --ipe=*) if ip_is_ok $optval;then ipE=$optval; fi
+      --ipe=*) if ipIsOk $optval;then ipE=$optval; fi
       ;;
-      --ipk=*) if ip_is_ok $optval;then ipK=$optval; fi
+      --ipk=*) if ipIsOk $optval;then ipK=$optval; fi
       ;;
-      --ipr=*) if ip_is_ok $optval;then ipR=$optval; fi
+      --ipr=*) if ipIsOk $optval;then ipR=$optval; fi
       ;;
       --java11) javaVersion="11"
       ;;
@@ -211,6 +220,8 @@ for opt do
       ;;
       --portr=*) if port_is_ok $optval;then portR=$optval; fi
       ;;
+      --systrans=*) if protocolIsOk $optval; then rProtocol=$optval; fi
+      ;;
       --version|-v) showInfo
       ;;
       *)
@@ -219,19 +230,28 @@ for opt do
 
   esac
 done
-echo $portL $portK $portE $javaVersion $ipE $ipK $ipR
-exit 1000
+
 #test run as root user
 if [ "$EUID" -ne 0 ]
         then echo "Please run as root"
         exit 1
 fi
 
-
-if [ $need -ne "2" ]; then
-	echo -e  "\033[0;33m--elastic && --kibana\033[0m"
-	exit 2
+#check arg
+if [[ -z "$type" ]]; then
+	argErr "\033[0;33mA type argument is missing\033[0m"
 fi
+
+if [ "$type" == "client" ] && [ -z "$ipR" ];then
+   argErr "\033[0;33m--ipR must be specified for client type\033[0m"
+fi
+
+if [ "$type" == "client" ] && [ -z "$ipK" ];then
+   argErr "\033[0;33m--ipK must be specified for client type\033[0m"
+fi
+################################################################################
+
+
 
 #Security
 if $disableSel; then
@@ -250,7 +270,8 @@ fi
 printf "\nInstall repo Elastic 7.x\n"
 rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 #removeKey
-#rpm -e $(rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n' | grep -oP '.*(?=gpg\(Elasticsearch)')
+#rpm -e $(rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n'\
+# | grep -oP '.*(?=gpg\(Elasticsearch)')
 cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
 [elasticstack]
 name=Elastic repository for 7.x packages
