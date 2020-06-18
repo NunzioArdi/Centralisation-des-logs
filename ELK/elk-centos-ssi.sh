@@ -80,7 +80,7 @@ disableFirewall=false
 
 
 if command -v dnf>/dev/null;then p=dnf; fi #if dnf not exist, used yum
-if ! command -v systemctl>/dev/null;then c=service; fi 
+if ! command -v systemctl>/dev/null;then c=service; fi
 #TODOif systemd not exist, used init.d
 ipLocal=$(hostname -i)
 ################################################################################
@@ -100,7 +100,7 @@ function port_is_ok {
    local -i port_num=$(to_int "${port}" 2>/dev/null)
 
    if (( $port_num < 1 || $port_num > 65535 )) ; then
-      argErr "*** ${port} is not a valid port"
+      argErr "${port} is not a valid port"
       return 1
    fi
 
@@ -180,13 +180,13 @@ protocolIsOk(){
    if [ "$1" == "UDP"] || [ "$1" == "TCP" ];then
       return 0
    else
-      argErr "*** $1 is not a valid protocol"
+      argErr "$1 is not a valid protocol"
       return 1
    fi
 }
 
 argErr(){
-  echo -e "$1"
+  echo -e "\033[0;33m*** $1\033[0m"
   exit 1
 }
 ################################################################################
@@ -194,14 +194,17 @@ argErr(){
 
 
 #arg
-for opt do
+for opt in $@; do
+   optX=$opt
    optval="${opt#*=}"
    case "$opt" in
+      --client) setType $opt
+      ;;
       --dissable-firewall) disableFirewall=1
       ;;
       --dissable-selinux) disableSel=true
       ;;
-      --elkserver|--rsyserver|--client) setType $opt
+      --elkserver) setType $opt
       ;;
       --help|-h) showHelp
       ;;
@@ -221,6 +224,8 @@ for opt do
       ;;
       --portr=*) if port_is_ok $optval;then portR=$optval; fi
       ;;
+      --rsyserver) setType $opt
+      ;;
       --systrans=*) if protocolIsOk $optval; then rProtocol=$optval; fi
       ;;
       --version|-v) showInfo
@@ -228,7 +233,6 @@ for opt do
       *)
          echo "Unknown option $1, ignored"
          ;;
-
   esac
 done
 
@@ -240,15 +244,15 @@ fi
 
 #check arg
 if [[ -z "$type" ]]; then
-	argErr "\033[0;33mA type argument is missing\033[0m"
+	argErr "A type argument is missing"
 fi
 
 if [ "$type" == "client" ] && [ -z "$ipR" ];then
-   argErr "\033[0;33m--ipR must be specified for client type\033[0m"
+   argErr "--ipr must be specified for client type"
 fi
 
 if [ "$type" == "client" ] && [ -z "$ipK" ];then
-   argErr "\033[0;33m--ipK must be specified for client type\033[0m"
+   argErr "--ipk must be specified for client type"
 fi
 ################################################################################
 
@@ -266,6 +270,9 @@ if $disableFirewall; then
 		systemctl stop firewalld
 	fi
 fi
+################################################################################
+
+
 
 #repo
 printf "\nInstall repo Elastic 7.x\n"
@@ -283,7 +290,10 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOF
-${p} -q check-update
+${p} -q check-update 1>/dev/null
+################################################################################
+
+
 
 #Server
 if [ $type == "server" ];then
