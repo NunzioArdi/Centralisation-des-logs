@@ -1,14 +1,13 @@
 #/bin/bash
 <<TODO
-    systemd et init.d
-    filebeat depuis yum
     ram
     vérification version package
     rsyslog serveur
     config beat pour rsyslog client et serveur
+    firewall sur init.d
 TODO
 
-version=0.8a
+version=0.8b
 
 showHelp() {
 cat <<EOF
@@ -30,6 +29,9 @@ Options:
    --ipk=IPv4		   set kibana access ip ["local ip"]
    --ipr=IPv4		   set the rsyslog ip
    --java11                use java 11 instead of Java 8
+   --meme=STRING	   set Xmx and Xms for elasticsearch [2G]
+   --memk=STRING           set Xmx and Xms for kibana [2G]
+   --meml=STRING	   set Xmx and Xms for logstash [1G]
    --porte=PORT		   set elasticsearch port [9200]
    --portk=PORT		   set kibana port [5601]
    --portl=PORT		   set logstash input port [5044]
@@ -55,13 +57,16 @@ exit 0;
 #Variable
 type=
 p=yum
+systemd=true
 
 javaVersion="1.8.0"
 package_e="elasticsearch"
 package_k="kibana"
 package_l="logstash"
 
-mem=1G
+memE=2G
+memK=2G
+memL=1G
 ipE=localhost #default restrict access to Kibana
 ipK=
 ipR=
@@ -80,8 +85,9 @@ disableFirewall=false
 
 
 if command -v dnf>/dev/null;then p=dnf; fi #if dnf not exist, used yum
-if ! command -v systemctl>/dev/null;then c=service; fi
+if ! command -v systemctl>/dev/null;then systemd=false; fi
 #TODOif systemd not exist, used init.d
+# ip=$(hostname -I | awk '{print $1}')
 ipLocal=$(hostname -i)
 ################################################################################
 
@@ -148,7 +154,7 @@ function javaInstall {
 }
 
 ipIsOk(){
-   re='^(0*(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))\.){3}'
+   local re='^(0*(1?[0-9]{1,2}|2([0-4][0-9]|5[0-5]))\.){3}'
    re+='0*(1?[0-9]{1,2}|2([‌​0-4][0-9]|5[0-5]))$'
 
    if [ "$1" == "localhost" ];then
@@ -173,7 +179,6 @@ setType(){
       echo "See $0 --help for used $1"
       exit 1
    fi
-
 }
 
 protocolIsOk(){
@@ -183,6 +188,18 @@ protocolIsOk(){
       argErr "$1 is not a valid protocol"
       return 1
    fi
+}
+
+memIsOk(){
+   local re="\d*[gGmMkK]"
+
+   if [[ $1 =~ $re ]]; then
+      return 0
+   else
+      argErr "$1 is not a valid Xmx value"
+      return 1
+   fi
+
 }
 
 argErr(){
@@ -215,6 +232,12 @@ for opt in $@; do
       --ipr=*) if ipIsOk $optval;then ipR=$optval; fi
       ;;
       --java11) javaVersion="11"
+      ;;
+      --meme=*) if memIsOk $optval;then memE=$optval; fi
+      ;;
+      --memk=*) if memIsOk $optval;then memK=$optval; fi
+      ;;
+      --meml=*) if memIsOk $optval;then memL=$optval; fi
       ;;
       --porte=*) if port_is_ok $optval;then portE=$optval; fi
       ;;
@@ -253,6 +276,10 @@ fi
 
 if [ "$type" == "client" ] && [ -z "$ipK" ];then
    argErr "--ipk must be specified for client type"
+fi
+
+if [ "$type" == "server" ] && [ -z "$ipK" ];then
+   ipK=$ipLocal
 fi
 ################################################################################
 
@@ -308,7 +335,7 @@ if [ $type == "server" ];then
    fi
 
 
-   #2 Elasticsearch 7
+   #Elasticsearch
    if isinstalled $package_e; then
       echo "$package_e already installed"
       if isUpToDate $package_e; then ${com} $package_e;  fi
@@ -325,8 +352,12 @@ if [ $type == "server" ];then
 #      sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
 #      sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
 
-      systemctl daemon-reload
-      systemctl enable --now elasticsearch.service
+      if systemd; then
+         systemctl daemon-reload
+         systemctl enable --now elasticsearch.service
+      else
+         service elasticsearch start
+      fi
 
       #test if works
       printf "\nTest if Elasticsearch works (sleep 10s)\n"
@@ -335,7 +366,7 @@ if [ $type == "server" ];then
 fi
 
 
-   #3 Kibana
+   #Kibana
    if isinstalled $package_k; then
       echo "$package_k already installed"
       if isUpToDate $package_k; then ${com} $package_k; fi
@@ -343,13 +374,13 @@ fi
       printf "\nInstall $package_k\n"
       ${p} -y install $package_k
 
+      printf "\nConfiguration\n"
+
       #kibana server port
       sed -i "s/#server.port: 5601/server.port: $portK/" /etc/kibana/kibana.yml
 
       #kibana server ip
-#      ip=$(hostname -I | awk '{print $1}')
-      local ip=$(hostname -i)
-      sed -i "s/#server.host: \"localhost\"/server.host: $ip/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
+      sed -i "s/#server.host: \"localhost\"/server.host: $ipK/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
 
       #bind the kibana server to the local Elasticsearch server
       sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
@@ -360,22 +391,27 @@ fi
          firewall-cmd --reload
       fi
 
-      systemctl enable --now kibana
+      if systemd; then
+         systemctl daemon-reload
+         systemctl enable --now kibana
+      else
+         service kibana start
+      fi
 
-      printf "\nTest if Elasticsearch works (sleep 30s)\n"
-      echo "sleep 30s"
+      printf "\nTest if Elasticsearch works (sleep 30s)\nsleep30s\n"
       sleep 20s
-      if curl -XGET "$ip:5601" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 3 ; fi # //TODO remplacer localhost par l'ip voulu
+      if curl -XGET "$ipK:$portK" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 3 ; fi
    fi
 
    #Logstash
-
    if isinstalled $package_l; then
-      echo "$package_l déjà installé"
+      echo "$package_l already installed"
       if isUpToDate $package_l; then ${com} $package_l; fi
    else
       printf "\nInstall $package_l\n"
       ${p} -y install $package_l
+
+      printf "\nConfiguration\n"
 
       #allow external connection
       if $disableFirewall; then
@@ -386,18 +422,22 @@ fi
       cat <<EOF | tee /etc/logstash/conf.d/elk.conf
 input {
   beats {
-    port => 5044
+    port => $ipL
   }
 }
 output {
   elasticsearch {
-    hosts => ["localhost:9200"]
+    hosts => ["$ipE:$portE"]
   }
 }
 EOF
 
-      systemctl daemon-reload
-      systemctl enable --now logstash.service
+      if systemd; then
+         systemctl daemon-reload
+         systemctl enable --now logstash.service
+      else
+         service logstash start
+      fi
    fi
 
 else
@@ -407,10 +447,12 @@ else
       if isUpToDate $package_f; then ${com} $package_f; fi
    else
       printf "\nInstall $package_f\n"
-      cd /tmp
-      curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
-      rpm -vi filebeat-7.7.1-x86_64.rpm
-      rm -f filebeat-7.7.1-x86_64.rpm
+      #cd /tmp
+      #curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
+      #rpm -vi filebeat-7.7.1-x86_64.rpm
+      #rm -f filebeat-7.7.1-x86_64.rpm
+
+      ${p} -y install filebeat
 
       sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
       sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
@@ -419,6 +461,13 @@ else
    fi
 
    #2.rsyslog
+   mv /etc/rsyslog.conf /etc/rsyslog.conf.back
    echo "*.* @$ipRsys" >>/etc/rsyslog.conf
-   systemctl restart rsyslog
+
+
+   if systemd; then
+      systemctl restart rsyslog
+   else
+      service rsyslog restart
+   fi
 fi
