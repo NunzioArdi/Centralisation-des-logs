@@ -182,6 +182,7 @@ protocolIsOk(){
    else
       argErr "*** $1 is not a valid protocol"
       return 1
+   fi
 }
 
 argErr(){
