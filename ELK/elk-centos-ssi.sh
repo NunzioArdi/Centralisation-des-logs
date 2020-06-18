@@ -1,6 +1,5 @@
 #/bin/bash
 <<TODO
-    ram
     vérification version package
     rsyslog serveur
     config beat pour rsyslog client et serveur
@@ -84,11 +83,9 @@ disableFirewall=false
 
 
 
-if command -v dnf>/dev/null;then p=dnf; fi #if dnf not exist, used yum
+if command -v dnf>/dev/null;then p=dnf; fi
 if ! command -v systemctl>/dev/null;then systemd=false; fi
-#TODOif systemd not exist, used init.d
-# ip=$(hostname -I | awk '{print $1}')
-ipLocal=$(hostname -i)
+ipLocal=$(hostname -i) # ip=$(hostname -I | awk '{print $1}')
 ################################################################################
 
 
@@ -323,7 +320,7 @@ ${p} -q check-update 1>/dev/null
 
 
 #Server
-if [ $type == "server" ];then
+if [ $type == "elkserver" ];then
 
    #1. JAVA
    if isinstalled java-$javaVersion-openjdk; then
@@ -349,8 +346,8 @@ if [ $type == "server" ];then
       sed -i "s/#http.port: 9200/http.port: $portE/" /etc/elasticsearch/elasticsearch.yml
 
       #ram
-#      sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
-#      sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
+      sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
+      sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
 
       if systemd; then
          systemctl daemon-reload
@@ -380,7 +377,7 @@ fi
       sed -i "s/#server.port: 5601/server.port: $portK/" /etc/kibana/kibana.yml
 
       #kibana server ip
-      sed -i "s/#server.host: \"localhost\"/server.host: $ipK/" /etc/kibana/kibana.yml #TODO host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
+      sed -i "s/#server.host: \"localhost\"/server.host: $ipK/" /etc/kibana/kibana.yml #host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
 
       #bind the kibana server to the local Elasticsearch server
       sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
@@ -459,11 +456,14 @@ else
 
       filebeat setup -e --dashboards
    fi
+fi
 
-   #2.rsyslog
+if [ "$type" == "client" ];then
+   #rsyslog
    mv /etc/rsyslog.conf /etc/rsyslog.conf.back
-   echo "*.* @$ipRsys" >>/etc/rsyslog.conf
-
+   val=
+   if [ "$rProtocol" == "UDP" ]; then val='@'; else val='@@'; fi
+   echo "*.* $val$ipRsys" >>/etc/rsyslog.conf
 
    if systemd; then
       systemctl restart rsyslog
