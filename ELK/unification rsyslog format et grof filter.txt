@@ -30,3 +30,4 @@ test script bash: bash -n scriptname
 grep -P: https://perlmaven.com/regex-cheat-sheet
 bash -> if [[ or [: https://stackoverflow.com/questions/3427872/whats-the-difference-between-and-in-bash)
 create systemd https://www.opentechguides.com/how-to/article/centos/169/systemd-custom-service.html
+test tls3 https://www.wolfssl.com/using-curl-wolfssl-tls-1-3/
