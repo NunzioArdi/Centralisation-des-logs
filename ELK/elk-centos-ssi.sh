@@ -85,7 +85,7 @@ disableFirewall=false
 
 if command -v dnf>/dev/null;then p=dnf; fi
 if ! command -v systemctl>/dev/null;then systemd=false; fi
-if hostname -I; then ipLocal=$(hostname -I | awk '{print $1}');
+if hostname -I&>/dev/null; then ipLocal=$(hostname -I | awk '{print $1}');
    else ipLocal=$(hostname -i); fi
 ################################################################################
 
@@ -303,7 +303,7 @@ fi
 #removeKey
 #rpm -e $(rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n'\
 # | grep -oP '.*(?=gpg\(Elasticsearch)')
-if rpm -q gpg-pubkey | grep -o 'gpg-pubkey-d88e42b4-52371eca'; then
+if ! rpm -q gpg-pubkey | grep 'gpg-pubkey-d88e42b4-52371eca'>/dev/null; then
    printf "\nInstall repo Elastic 7.x\n"
    rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 
