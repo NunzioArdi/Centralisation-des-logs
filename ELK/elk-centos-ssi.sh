@@ -346,8 +346,8 @@ if [ $type == "elkserver" ];then
       sed -i "s/#http.port: 9200/http.port: $portE/" /etc/elasticsearch/elasticsearch.yml
 
       #ram
-      sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
-      sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
+      sed -i "s/^-Xms.*$/-Xms$memE/" /etc/elasticsearch/jvm.options
+      sed -i "s/^-Xmx.*$/-Xmx$memE/" /etc/elasticsearch/jvm.options
 
       if $systemd; then
          systemctl daemon-reload
@@ -377,6 +377,9 @@ fi
       sed -i "s/#server.port: 5601/server.port: $portK/" /etc/kibana/kibana.yml
 
       #kibana server ip
+      if [[ -z "$ipK" ]]; then
+         ipK=$ipLocal
+      fi
       sed -i "s/#server.host: \"localhost\"/server.host: $ipK/" /etc/kibana/kibana.yml #host donne l'accès: localhost=que le pc, 192.x.x.x donne accès à tous les machine qui on accès a cette ip
 
       #bind the kibana server to the local Elasticsearch server
@@ -395,8 +398,8 @@ fi
          service kibana start
       fi
 
-      printf "\nTest if Elasticsearch works (sleep 30s)\nsleep30s\n"
-      sleep 20s
+      printf "\nTest if Kibana works (sleep 25s)\n"
+      sleep 25s
       if curl -XGET "$ipK:$portK" &>/dev/null;then echo -e "\033[0;32mKibana work\033[0m"; else echo -e "\033[0;31mKibana doesn't work\033[0m"; exit 3 ; fi
    fi
 
