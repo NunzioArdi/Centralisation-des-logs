@@ -6,7 +6,7 @@
     firewall sur init.d
 TODO
 
-version=0.8c
+version=0.8d
 
 showHelp() {
 cat <<EOF
@@ -60,6 +60,7 @@ systemd=true
 
 javaVersion="1.8.0"
 package_e="elasticsearch"
+packageF="filebeat"
 package_k="kibana"
 package_l="logstash"
 
@@ -448,11 +449,11 @@ EOF
 
 else
    #1. filebeat
-   if isinstalled $package_f; then
-      echo "$package_f already installed";
-      if isUpToDate $package_f; then ${p} $package_f; fi
+   if isinstalled $packageF; then
+      echo "$packageF already installed";
+      if isUpToDate $packageF; then ${p} $packageF; fi
    else
-      printf "\nInstall $package_f\n"
+      printf "\nInstall $packageF\n"
       #cd /tmp
       #curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
       #rpm -vi filebeat-7.7.1-x86_64.rpm
