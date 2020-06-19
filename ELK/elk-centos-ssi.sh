@@ -6,7 +6,7 @@
     firewall sur init.d
 TODO
 
-version=0.8e
+version=0.8f
 
 showHelp() {
 cat <<EOF
@@ -461,16 +461,27 @@ else
 
       ${p} -y install filebeat
 
-      sed -i "s/hosts: [\"localhost:9200\"]/hosts: [\"$ipE:$portE\"]/" /etc/filebeat/filebeat.yml
+      printf "\nConfiguration\n"
+
+      #kibana dashboard
+      sed -i "s/#hosts: \[\"localhost:5044\"\]/hosts: \[\"$ipK:$portL\"\]/" /etc/filebeat/filebeat.yml
+
+      #disbale elasticsearch output
+      sed -i "s/output.elasticsearch:/#output.elasticsearch:/" /etc/filebeat/filebeat.yml
+      sed -i "s/hosts: \[\"localhost:9200\"\]/#hosts: \[\"$ipK:$portE\"\]/" /etc/filebeat/filebeat.yml
+
+      #enable logstash output
       sed -i "s/#host: \"localhost:5601\"/host: \"$ipK:$portK\"/" /etc/filebeat/filebeat.yml
+      sed -i "s/#output.logstash/output.logstash/" /etc/filebeat/filebeat.yml
 
       filebeat setup -e --dashboards
    fi
 fi
 
 if [ "$type" == "client" ];then
+   printf "\nRsyslog configuration\n"
    #rsyslog
-   mv /etc/rsyslog.conf /etc/rsyslog.conf.back
+   cp /etc/rsyslog.conf /etc/rsyslog.conf.back
    val=
    if [ "$rProtocol" == "UDP" ]; then val='@'; else val='@@'; fi
    echo "*.* $val$ipRsys" >>/etc/rsyslog.conf
