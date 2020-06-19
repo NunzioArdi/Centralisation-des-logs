@@ -419,6 +419,10 @@ fi
 
       printf "\nConfiguration\n"
 
+      #ram
+      sed -i "s/^-Xms.*$/-Xms$memL/" /etc/logstash/jvm.options
+      sed -i "s/^-Xmx.*$/-Xmx$memL/" /etc/logstash/jvm.options
+
       #allow external connection
       if ! $disableFirewall; then
          firewall-cmd --add-port=$portL/tcp --permanent
@@ -428,7 +432,7 @@ fi
       cat <<EOF | tee /etc/logstash/conf.d/elk.conf
 input {
   beats {
-    port => $ipL
+    port => $portL
   }
 }
 output {
