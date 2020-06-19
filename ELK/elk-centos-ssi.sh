@@ -6,7 +6,7 @@
     firewall sur init.d
 TODO
 
-version=0.8b
+version=0.8c
 
 showHelp() {
 cat <<EOF
@@ -85,7 +85,8 @@ disableFirewall=false
 
 if command -v dnf>/dev/null;then p=dnf; fi
 if ! command -v systemctl>/dev/null;then systemd=false; fi
-ipLocal=$(hostname -i) # ip=$(hostname -I | awk '{print $1}')
+if hostname -I; then ipLocal=$(hostname -I | awk '{print $1}');
+   else ipLocal=$(hostname -i); fi
 ################################################################################
 
 
@@ -299,12 +300,14 @@ fi
 
 
 #repo
-printf "\nInstall repo Elastic 7.x\n"
-rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 #removeKey
 #rpm -e $(rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n'\
 # | grep -oP '.*(?=gpg\(Elasticsearch)')
-cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
+if rpm -q gpg-pubkey | grep -o 'gpg-pubkey-d88e42b4-52371eca'; then
+   printf "\nInstall repo Elastic 7.x\n"
+   rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+   cat <<EOF | tee /etc/yum.repos.d/Elastic-elasticsearch.repo
 [elasticstack]
 name=Elastic repository for 7.x packages
 baseurl=https://artifacts.elastic.co/packages/7.x/yum
@@ -314,7 +317,10 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOF
-${p} -q check-update 1>/dev/null
+   ${p} -q check-update 1>/dev/null
+else
+   echo "The repo Elastic 7.x is already installed"
+fi
 ################################################################################
 
 
