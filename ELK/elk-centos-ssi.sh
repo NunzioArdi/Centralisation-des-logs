@@ -349,7 +349,7 @@ if [ $type == "elkserver" ];then
       sed -i "s/^-Xms.*$/-Xms$mem/" /etc/elasticsearch/jvm.options
       sed -i "s/^-Xmx.*$/-Xmx$mem/" /etc/elasticsearch/jvm.options
 
-      if systemd; then
+      if $systemd; then
          systemctl daemon-reload
          systemctl enable --now elasticsearch.service
       else
@@ -388,7 +388,7 @@ fi
          firewall-cmd --reload
       fi
 
-      if systemd; then
+      if $systemd; then
          systemctl daemon-reload
          systemctl enable --now kibana
       else
@@ -429,7 +429,7 @@ output {
 }
 EOF
 
-      if systemd; then
+      if $systemd; then
          systemctl daemon-reload
          systemctl enable --now logstash.service
       else
@@ -465,7 +465,7 @@ if [ "$type" == "client" ];then
    if [ "$rProtocol" == "UDP" ]; then val='@'; else val='@@'; fi
    echo "*.* $val$ipRsys" >>/etc/rsyslog.conf
 
-   if systemd; then
+   if $systemd; then
       systemctl restart rsyslog
    else
       service rsyslog restart
