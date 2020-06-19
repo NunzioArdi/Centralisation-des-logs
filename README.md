@@ -95,6 +95,9 @@ Leur configuration pour fonctionner est assez simple mais peuvent être poussé 
 
 Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
 
+### Elasticsearch
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [1][1]
+
 #### FileBeat
 
 ##### Intro
@@ -131,3 +134,13 @@ On execute cette commande
 ```cmd
 # filebeat setup --dashboards
 ```
+
+
+
+
+
+
+
+
+<br><br><br><br><br><br><br><br>
+[1]: <https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql>
