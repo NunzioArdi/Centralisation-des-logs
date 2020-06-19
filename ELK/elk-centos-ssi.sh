@@ -392,7 +392,7 @@ fi
       sed -i 's/#elasticsearch.hosts:/elasticsearch.hosts:/' /etc/kibana/kibana.yml
 
       #allow external connection
-      if $disableFirewall; then
+      if ! $disableFirewall; then
          firewall-cmd --add-port=$portK/tcp --permanent
          firewall-cmd --reload
       fi
@@ -420,7 +420,7 @@ fi
       printf "\nConfiguration\n"
 
       #allow external connection
-      if $disableFirewall; then
+      if ! $disableFirewall; then
          firewall-cmd --add-port=$portL/tcp --permanent
          firewall-cmd --reload
       fi
