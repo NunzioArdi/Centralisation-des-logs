@@ -6,7 +6,7 @@
     firewall sur init.d
 TODO
 
-version=0.8c
+version=0.8b
 
 showHelp() {
 cat <<EOF
@@ -29,7 +29,6 @@ Options:
    --ipr=IPv4		   set the rsyslog ip
    --java11                use java 11 instead of Java 8
    --meme=STRING	   set Xmx and Xms for elasticsearch [2G]
-   --memk=STRING           set Xmx and Xms for kibana [2G]
    --meml=STRING	   set Xmx and Xms for logstash [1G]
    --porte=PORT		   set elasticsearch port [9200]
    --portk=PORT		   set kibana port [5601]
@@ -44,7 +43,7 @@ showInfo(){
 cat <<EOF
 Install ELK stack v7 for centos
 Support centos 7 and 8 (systemd)
-Centos 6 (init.d) is planned to be supported
+Centos 6 is planned to be supported (firewall is not supported) (init.d is supported)
 Script version: $version
 EOF
 exit 0;
@@ -64,7 +63,6 @@ package_k="kibana"
 package_l="logstash"
 
 memE=2G
-memK=2G
 memL=1G
 ipE=localhost #default restrict access to Kibana
 ipK=
@@ -232,8 +230,6 @@ for opt in $@; do
       --java11) javaVersion="11"
       ;;
       --meme=*) if memIsOk $optval;then memE=$optval; fi
-      ;;
-      --memk=*) if memIsOk $optval;then memK=$optval; fi
       ;;
       --meml=*) if memIsOk $optval;then memL=$optval; fi
       ;;
