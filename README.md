@@ -1,4 +1,4 @@
-# CNRS-stage
+# Sauvegarde et analyse de log
 ## Rsyslog
 ### Intro
 
@@ -85,14 +85,24 @@ if $fromhost-ip == '127.0.0.1' then {
 Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `stop` signifie que le log s'arrête ici et ne continue pas les autres règles.
 
 
-## FileBeat
+## ELK
+La suite elastic comprent de nombreux logiciel: 
+- Elasticsearch pour stocker les logs dans une base de données non relationnel
+- Kibana qui sert d'interface complete à Elasticsearch
+- Logstash qui sert à récupérer les logs , appliqué des filtres et les envois à une base de données
+- Beat(FileBeat, WinLogBeat...) qui sont des client qui envois des logs
+Leur configuration pour fonctionner est assez simple mais peuvent être poussé assez loin. La plupart peuvent être indépendant mais sont fait pour pouvoir fonctionner ensemble.
 
-### Intro
-FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs. Mais nous n'allons pas les utiliser.
+Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
+
+#### FileBeat
+
+##### Intro
+FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
 
 Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention au indentation.
 
-### Config
+##### Config
 
 Dans la section inputs ce trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veux. La recherche de fichier ne va pas dans les sous-repertoires.
 ```yml
@@ -112,8 +122,12 @@ Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est inst
 setup.kibana
   host: "<IP_K>:5601"
 ```
-Enfin on configure l'output. Il ne peut en avoir qu'un seul.
+Enfin on configure l'output. Il ne peut en avoir qu'un seul. On commente l'output de elasticsearch et on decommente celui de logstash avec:
 ```yml
 output.logstash:
   hosts: ["<IP_L>:5044"]
+```
+On execute cette commande
+```cmd
+# filebeat setup --dashboards
 ```
