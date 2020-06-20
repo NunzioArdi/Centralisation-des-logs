@@ -96,7 +96,14 @@ Leur configuration pour fonctionner est assez simple mais peuvent être poussé 
 Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
 
 ### Elasticsearch
-ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [1][1]
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [1][1]. Il dispose également d'une API permetant de faire des requet http (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
+
+La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
+```yml
+network.host: localhost
+http.port: 9200
+#discovery.seed_hosts: ["localhost"] #à mettre si network.host est sur une ip local ou autre
+```
 
 #### FileBeat
 
