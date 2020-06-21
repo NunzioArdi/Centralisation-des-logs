@@ -99,10 +99,10 @@ Leur configuration pour fonctionner est assez simple mais peuvent être poussé 
 Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
 
 ### Elasticsearch
-##### Intro
-ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permetant de faire des requet http (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
+#### Intro
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permetant de faire des requet HTTP (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
 
-##### Configuration
+#### Configuration
 - La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
 ```yml
 network.host: localhost
@@ -114,14 +114,26 @@ http.port: 9200
 `# firewall-cmd --permanent --add-port=9200/tcp`<br>
 `# firewall-cmd –reload`
 
-#### FileBeat
-
-##### Intro
+### Kibana
+#### Intro
+Kibana sert d'interface web pour intéragire avec la base de données Elasticsearch. Il dispose également d'une API HTTP.
+#### Configuration
+- <IP_E> peut très bien être localhost
+```yml
+server.port: 5601
+server.host: <IP> #donne accès
+elasticsearch.host: ["<IP_E>:<PORT_E>"]
+```
+- Si le pare-feu est activé<br>
+`# firewall-cmd --permanent --add-port=5601/tcp`<br>
+`# firewall-cmd –reload`
+### FileBeat
+#### Intro
 FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
 
 Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention au indentation.
 
-##### Config
+#### Config
 
 Dans la section inputs ce trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veux. La recherche de fichier ne va pas dans les sous-repertoires.
 ```yml
