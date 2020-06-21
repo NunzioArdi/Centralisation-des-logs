@@ -1,4 +1,5 @@
 # Sauvegarde et analyse de log
+Afin d'éviter des problèmes (notament avec logstash), il est mieux de désactivé SELinux 
 ## Rsyslog
 ### Intro
 
@@ -32,7 +33,7 @@ Vient ensuite la configuration de stockage des logs. Les règles que nous allons
 et ceux du serveur lui-même.<br>
 Une règle est définie par `facility.level [?]template1;template2`.<br>
 Un modèle peut être un chemin `/var/log/message` ou le nom d’un modèle. Le `?` indique un modèle de fichier dynamique.
-De nombreux [exemples](https://rsyslog-doc.readthedocs.io/en/latest/configuration/examples.html) avec leurs explications sont
+De nombreux [exemples](https://rsyslog-doc.readthedocs.io/en/latest/configuration/examples.html "exemples de configurations") avec leurs explications sont
 disponibles dans la documentation.<br>
 Deux modèles peuvent par exemple être appliqués pour définir l’emplacement du fichier et la façon dont le message sera écrit dans le fichier.
 Un modèle est défini par `template(parameters) { list-descriptions }`
@@ -49,21 +50,23 @@ template(name="modeleFichier" type="list" {
 ```
 La [liste des propriétées](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
 
-Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier
+Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier:
 ```
 *.* ?modeleFichier
 ```
 
  ### Configuration client
 
-Définir l’adresse du serveur et le protocole
+Rajouter cette ligne à la fin du fichier, définir l’adresse du serveur, le port (514) et le protocole
 ```
 *.*  @<IP>:<PORT>
 ```
-`@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, en mettre 2
+`@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, mettre `@@`
+
+A noter que c'est le serveur qui recois les logs qui définit la façon dont il seront écrit.
 
 ### RFC
-De base, les logs ne sont pas enregistrés selon la RCF 5424 ou même l'ancienne RFC 3164: les facility et les severity ne sont pas écrites: `TIMESTAMP_RFC3164 HOSTNAME PROGRAMNAME[PID]: MSG`. Pour utilisé la nouvelle RFC, il faut modifier le paramettre d'écriture par défaut.
+De base, les logs ne sont pas enregistrés selon la RCF 5424 ou même l'ancienne RFC 3164: les facility et les severity ne sont pas écrites: `TIMESTAMP_RFC3164 HOSTNAME PROGRAMNAME[PID]: MSG`. Pour utilisé la nouvelle RFC, et avoir un message de cette forme `<PRI>VERSION TIMESTAMP_RFC5424 HOSTNAME PROGRAMNAME PROCID MSGID STRUCTURED-DATA MSG`,  il faut modifier le paramettre d'écriture par défaut.
 ```
 #Pour les anciens format
 $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
@@ -71,9 +74,9 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 # Pour les nouveau format
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
-
+En générale, les nouveau log resemblerons à ça : `<13>1 2020-06-21T14:55:01.044793+02:00 rsysmachine root 5487 - - un message ecrit par la commande logger`
 ### Plus loins
-La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients
+La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients.
 ```
 template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
 if $fromhost-ip == '127.0.0.1' then {
@@ -82,8 +85,8 @@ if $fromhost-ip == '127.0.0.1' then {
 }
 *.* ?modeleFichier
 ```
-Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `stop` signifie que le log s'arrête ici et ne continue pas les autres règles.
-
+Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `stop` (ou `& ~`) signifie que le log s'arrête ici et ne continue pas les autres règles.
+Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres règles.
 
 ## ELK
 La suite elastic comprent de nombreux logiciel: 
@@ -96,14 +99,20 @@ Leur configuration pour fonctionner est assez simple mais peuvent être poussé 
 Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
 
 ### Elasticsearch
-ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [1][1]. Il dispose également d'une API permetant de faire des requet http (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
+##### Intro
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permetant de faire des requet http (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
 
-La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
+##### Configuration
+- La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
 ```yml
 network.host: localhost
 http.port: 9200
 #discovery.seed_hosts: ["localhost"] #à mettre si network.host est sur une ip local ou autre
 ```
+
+- Si le pare-feu est activé<br>
+`# firewall-cmd --permanent --add-port=9200/tcp`<br>
+`# firewall-cmd –reload`
 
 #### FileBeat
 
@@ -141,13 +150,3 @@ On execute cette commande
 ```cmd
 # filebeat setup --dashboards
 ```
-
-
-
-
-
-
-
-
-<br><br><br><br><br><br><br><br>
-[1]: <https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql>
