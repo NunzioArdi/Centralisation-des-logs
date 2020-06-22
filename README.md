@@ -158,8 +158,70 @@ output {
 }
 ```
 On utilise le module de sortie elasticsearch pour envoyer les données récupérer par Logstash vers une instance de elasticsearch.
-
-
+```
+filter {
+    grok {
+      break_on_match => true
+      match => [ 
+        "message", "%{SYSLOG5424LINE}",
+        "message", "%{SYSLOGLINE}"
+      ]
+    }
+    
+    if "rfc5424" in [tags] {
+        ruby {
+            code => ' event.set('severity', (event.get("syslog5424_pri").to_i).modulo(8))'
+        }
+        ruby {
+            code => 'event.set("facility",(event.get("syslog5424_pri").to_i).floor))"
+        }
+        mutate {
+            remove_field => [ "syslog5424_pri" ]
+        }
+    }
+}
+```
+Cette exemple n'est pas concret mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
+Grok analyser un texte arbitraire et le structure. Il utilise des paternes comme `SYSLOG5424LINE` qui utilise des règles regex. [Liste des paternes](https://grokdebug.herokuapp.com/patterns). Si un log passe un paterne, il sera structurer et chaque données sera attribué à un parametre. Par exemple:
+```
+Jun 30 22:45:01 ubuntu dhclient: bound to 192.168.0.1 -- renewal...
+match avec %{SYSLOGLINE} et donne
+{
+  "timestamp": [
+    [
+      "Jun 30 22:45:01"
+    ]
+  ],
+  "logsource": [
+    [
+      "ubuntu"
+    ]
+  ],
+  "HOSTNAME": [
+    [
+      "ubuntu"
+    ]
+  ],
+  "program": [
+    [
+      "dhclient"
+    ]
+  ],
+  "pid": [
+    [
+      null
+    ]
+  ],
+  "message": [
+    [
+      "bound to 192.168.0.1 -- renewal..."
+    ]
+  ]
+}
+```
+Ensuite on regarde si dans le tableau `[tags]` ce trouve la valeur `rfc5424` (que l'on peut ajouter avec beats). 
+On execute ensuite un code ruby qui va calculer la severity et la facility etajouter un couple json `"severity: 5, facility: 4` à la sortie.
+On supprime de la sortie json `syslog5424_pri: 154`, créer par grok.
 
 ### FileBeat
 #### Intro
@@ -179,7 +241,7 @@ filebeat.inputs:
     # tous les logs qui ce trouve dans le premier dossier du répertoire /var/log
     - /var/log/*/*.log
   # ajoute à la liste des tags json, utile pour logstash et/ou kibana
-  tags: ["json"]
+  tags: ["rfc5424"]
   # Liste des fichiers à exlure en regex
   exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
 ```
