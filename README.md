@@ -89,22 +89,22 @@ Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `
 Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres règles.
 
 ## ELK
-La suite elastic comprent de nombreux logiciel: 
+La suite elastic comprend de nombreux logiciels: 
 - Elasticsearch pour stocker les logs dans une base de données non relationnel
-- Kibana qui sert d'interface complete à Elasticsearch
+- Kibana qui sert d'interface complète à Elasticsearch
 - Logstash qui sert à récupérer les logs , appliqué des filtres et les envois à une base de données
-- Beat(FileBeat, WinLogBeat...) qui sont des client qui envois des logs
-Leur configuration pour fonctionner est assez simple mais peuvent être poussé assez loin. La plupart peuvent être indépendant mais sont fait pour pouvoir fonctionner ensemble.
+- Beat(FileBeat, WinLogBeat...) qui sont des clients qui envoie des logs
+Leur configuration pour fonctionner est assez simple mais peut être poussée assez loin. La plupart peuvent être indépendant mais sont faits pour pouvoir fonctionner ensemble.
 
-Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons les logs avec les clients beat que nous installerons sur les clients classique et le serveur rsyslog.
+Nous allons configurer un nouveau serveur dédier à ELK, puis nous enverrons les logs avec les clients beat que nous installerons sur les clients classiques et le serveur rsyslog.
 
 ### Elasticsearch
 #### Intro
-ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permetant de faire des requet HTTP (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permettant de faire des requetes HTTP (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
 
 #### Configuration
 `/etc/elasticsearch/elasticsearch.yml`
-- La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
+- La configuration suivante ne permet d'accéder à l'API que en local pour éviter que les utilisateurs du réseau puissent accéder à l'API.
 ```yml
 network.host: localhost
 http.port: 9200
@@ -134,12 +134,12 @@ elasticsearch.host: ["<IP_E>:<PORT_E>"]
 #### Intro
 Logstash est un logiciel qui va servire à collecter, analyser et envoyer les logs. 
 #### Configuration
-La configuration de logstash ce fais en créant des fichier .conf dans le dossier `/etc/logstash/conf.d/`. La configuration ce fait en 3 parties:
+La configuration de logstash ce fait en créant des fichiers .conf dans le dossier `/etc/logstash/conf.d/`. La configuration se fait en 3 parties:
 - **input**: L'entrée permet à Logstash de lire une source spécifique d'événements.
 - **filter**: Il effectue un traitement intermédiaire sur un événement. Les filtres sont souvent appliqués de manière conditionnelle en fonction des caractéristiques de l'événement.
 - **output**: La sortie envoie des données d'événements vers une destination particulière. Les sorties constituent l'étape finale du pipeline d'événements.
 
-Chaque partie est configurable avec des modules (la liste et leur paramètres sont dans la documentation [input](https://www.elastic.co/guide/en/logstash/current/input-plugins.html), [output](https://www.elastic.co/guide/en/logstash/current/output-plugins.html), [filter](https://www.elastic.co/guide/en/logstash/current/filter-plugins.html)).
+Chaque partie est configurable avec des modules (la liste et leurs paramètres sont dans la documentation [input](https://www.elastic.co/guide/en/logstash/current/input-plugins.html), [output](https://www.elastic.co/guide/en/logstash/current/output-plugins.html), [filter](https://www.elastic.co/guide/en/logstash/current/filter-plugins.html)).
 
 ```
 input {
@@ -148,7 +148,7 @@ input {
   }
 }
 ```
-On utilise le module d'entrer beats pour que les logiciels comme filebeat ou winlogbeats puissent envoyer leur données vers logstash.
+On utilise le module d'entrer beats pour que les logiciels comme filebeat ou winlogbeats puissent envoyer leurs données vers logstash.
 
 ```
 output {
@@ -157,7 +157,7 @@ output {
   }
 }
 ```
-On utilise le module de sortie elasticsearch pour envoyer les données récupérer par Logstash vers une instance de elasticsearch.
+On utilise le module de sortie elasticsearch pour envoyer les données récupérées par Logstash vers une instance de elasticsearch.
 ```
 filter {
     grok {
@@ -182,7 +182,7 @@ filter {
 }
 ```
 Cette exemple n'est pas concret mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
-Grok analyser un texte arbitraire et le structure. Il utilise des paternes comme `SYSLOG5424LINE` qui utilise des règles regex. [Liste des paternes](https://grokdebug.herokuapp.com/patterns). Si un log passe un paterne, il sera structurer et chaque données sera attribué à un parametre. Par exemple:
+Grok analyser un texte arbitraire et le structure. Il utilise des paternes comme `SYSLOG5424LINE` qui utilise des règles regex. [Liste des paternes](https://grokdebug.herokuapp.com/patterns). Si un log passe un paterne, il sera structuré et chaque donnée sera attribuée à un paramètre. Par exemple:
 ```
 Jun 30 22:45:01 ubuntu dhclient: bound to 192.168.0.1 -- renewal...
 match avec %{SYSLOGLINE} et donne
@@ -220,18 +220,18 @@ match avec %{SYSLOGLINE} et donne
 }
 ```
 Ensuite on regarde si dans le tableau `[tags]` ce trouve la valeur `rfc5424` (que l'on peut ajouter avec beats). 
-On execute ensuite un code ruby qui va calculer la severity et la facility etajouter un couple json `"severity: 5, facility: 4` à la sortie.
+On exécute ensuite un code ruby qui va calculer la severity et la facility et ajouter un couple json `"severity: 5, facility: 4` à la sortie.
 On supprime de la sortie json `syslog5424_pri: 154`, créer par grok.
 
 ### FileBeat
 #### Intro
 FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
 
-Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention au indentation.
+Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention aux indentations.
 
 #### Config
 
-Dans la section inputs ce trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veux. La recherche de fichier ne va pas dans les sous-repertoires.
+Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-repertoires.
 ```yml
 filebeat.inputs:
 - type: log
