@@ -1,5 +1,5 @@
 # Sauvegarde et analyse de log
-Afin d'éviter des problèmes (notament avec logstash), il est mieux de désactivé SELinux 
+Afin d'éviter des problèmes (notamment avec logstash), il est mieux de désactivé SELinux 
 ## Rsyslog
 ### Intro
 
@@ -48,7 +48,7 @@ template(name="modeleFichier" type="list" {
 	constant(value=".log")
 }
 ```
-La [liste des propriétées](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
+La [liste des propriétés](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
 
 Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier:
 ```
@@ -63,10 +63,10 @@ Rajouter cette ligne à la fin du fichier, définir l’adresse du serveur, le p
 ```
 `@` signifie que l'envois ce fais en UDP. Pour envoyer en TCP, mettre `@@`
 
-A noter que c'est le serveur qui recois les logs qui définit la façon dont il seront écrit.
+A noter que c'est le serveur qui reçois  les logs qui définit la façon dont ils seront écrits.
 
 ### RFC
-De base, les logs ne sont pas enregistrés selon la RCF 5424 ou même l'ancienne RFC 3164: les facility et les severity ne sont pas écrites: `TIMESTAMP_RFC3164 HOSTNAME PROGRAMNAME[PID]: MSG`. Pour utilisé la nouvelle RFC, et avoir un message de cette forme `<PRI>VERSION TIMESTAMP_RFC5424 HOSTNAME PROGRAMNAME PROCID MSGID STRUCTURED-DATA MSG`,  il faut modifier le paramettre d'écriture par défaut.
+De base, les logs ne sont pas enregistrés selon la RCF 5424 ou même l'ancienne RFC 3164: les facility et les severity ne sont pas écrites: `TIMESTAMP_RFC3164 HOSTNAME PROGRAMNAME[PID]: MSG`. Pour utilisé la nouvelle RFC, et avoir un message de cette forme `<PRI>VERSION TIMESTAMP_RFC5424 HOSTNAME PROGRAMNAME PROCID MSGID STRUCTURED-DATA MSG`,  il faut modifier le paramètre d'écriture par défaut.
 ```
 #Pour les anciens format
 $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
@@ -74,8 +74,8 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 # Pour les nouveau format
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
-En générale, les nouveau log resemblerons à ça : `<13>1 2020-06-21T14:55:01.044793+02:00 rsysmachine root 5487 - - un message ecrit par la commande logger`
-### Plus loins
+En générale, les nouveaux logs ressembleront à ça : `<13>1 2020-06-21T14:55:01.044793+02:00 rsysmachine root 5487 - - un message ecrit par la commande logger`
+### Plus loin
 La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients.
 ```
 template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
@@ -85,7 +85,7 @@ if $fromhost-ip == '127.0.0.1' then {
 }
 *.* ?modeleFichier
 ```
-Les fichiers locaux seront enregistrer celon le modèle dynamique `LocalFile`. `stop` (ou `& ~`) signifie que le log s'arrête ici et ne continue pas les autres règles.
+Les fichiers locaux seront enregistrés selon le modèle dynamique `LocalFile`. `stop` (ou `& ~`) signifie que le log s'arrête ici et ne continue pas les autres règles.
 Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres règles.
 
 ## ELK
@@ -100,7 +100,7 @@ Nous allons configurer un nouveau serveur dédier à ELK, puis nous enverrons le
 
 ### Elasticsearch
 #### Intro
-ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permettant de faire des requetes HTTP (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
+ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permettant de faire des requêtes  HTTP (GET, POST, DELETE...). C'est grâce à cela que Kibana permet d'intéragir avec Elasticsearch.
 
 #### Configuration
 `/etc/elasticsearch/elasticsearch.yml`
@@ -117,7 +117,7 @@ http.port: 9200
 
 ### Kibana
 #### Intro
-Kibana sert d'interface web pour intéragire avec la base de données Elasticsearch. Il dispose également d'une API HTTP.
+Kibana sert d'interface web pour intéragir avec la base de données Elasticsearch. Il dispose également d'une API HTTP.
 #### Configuration
 `/etc/kibana/kibana.yml`
 - <IP_E> peut très bien être localhost
@@ -132,7 +132,7 @@ elasticsearch.host: ["<IP_E>:<PORT_E>"]
 
 ### Logstash
 #### Intro
-Logstash est un logiciel qui va servire à collecter, analyser et envoyer les logs. 
+Logstash est un logiciel qui va servir à collecter, analyser et envoyer les logs. 
 #### Configuration
 La configuration de logstash ce fait en créant des fichiers .conf dans le dossier `/etc/logstash/conf.d/`. La configuration se fait en 3 parties:
 - **input**: L'entrée permet à Logstash de lire une source spécifique d'événements.
@@ -225,13 +225,13 @@ On supprime de la sortie json `syslog5424_pri: 154`, créer par grok.
 
 ### FileBeat
 #### Intro
-FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
+FileBeat est un agent qui va lire les logs et les envoyer à un serveur. Il peut les envoyer vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
 
 Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention aux indentations.
 
 #### Config
 
-Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-repertoires.
+Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-répertoires.
 ```yml
 filebeat.inputs:
 - type: log
@@ -242,7 +242,7 @@ filebeat.inputs:
     - /var/log/*/*.log
   # ajoute à la liste des tags json, utile pour logstash et/ou kibana
   tags: ["rfc5424"]
-  # Liste des fichiers à exlure en regex
+  # Liste des fichiers à exclure  en regex
   exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
 ```
 Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est installé
@@ -250,12 +250,12 @@ Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est inst
 setup.kibana
   host: "<IP_K>:5601"
 ```
-Enfin on configure l'output. Il ne peut en avoir qu'un seul. On commente l'output de elasticsearch et on decommente celui de logstash avec:
+Enfin on configure l'output. Il ne peut en avoir qu'un seul. On commente l'output de elasticsearch et on décommente celui de logstash avec:
 ```yml
 output.logstash:
   hosts: ["<IP_L>:5044"]
 ```
-On execute cette commande
+On exécute cette commande
 ```cmd
 # filebeat setup --dashboards
 ```
