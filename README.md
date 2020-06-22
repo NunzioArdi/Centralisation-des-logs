@@ -103,6 +103,7 @@ Nous allons configurer un nouveau serveur dédier à ELK, puis nous envérons le
 ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de contenu. [<sup>1</sup>](https://juvenal-chokogoue.developpez.com/tutoriels/elasticsearch-sgbd-nosql "ref1") . Il dispose d'une API permetant de faire des requet HTTP (GET, POST, DELETE...). C'est grace à cela que Kibana permet d'intéragire avec Elasticsearch.
 
 #### Configuration
+`/etc/elasticsearch/elasticsearch.yml`
 - La configuration suivante ne permet d'accéder à l'API que en local pour évité que les utilisateur du réseau puisse accéder à l'API.
 ```yml
 network.host: localhost
@@ -118,6 +119,7 @@ http.port: 9200
 #### Intro
 Kibana sert d'interface web pour intéragire avec la base de données Elasticsearch. Il dispose également d'une API HTTP.
 #### Configuration
+`/etc/kibana/kibana.yml`
 - <IP_E> peut très bien être localhost
 ```yml
 server.port: 5601
@@ -127,6 +129,38 @@ elasticsearch.host: ["<IP_E>:<PORT_E>"]
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=5601/tcp`<br>
 `# firewall-cmd –reload`
+
+### Logstash
+#### Intro
+Logstash est un logiciel qui va servire à collecter, analyser et envoyer les logs. 
+#### Configuration
+La configuration de logstash ce fais en créant des fichier .conf dans le dossier `/etc/logstash/conf.d/`. La configuration ce fait en 3 parties:
+- **input**: L'entrée permet à Logstash de lire une source spécifique d'événements.
+- **filter**: Il effectue un traitement intermédiaire sur un événement. Les filtres sont souvent appliqués de manière conditionnelle en fonction des caractéristiques de l'événement.
+- **output**: La sortie envoie des données d'événements vers une destination particulière. Les sorties constituent l'étape finale du pipeline d'événements.
+
+Chaque partie est configurable avec des modules (la liste et leur paramètres sont dans la documentation [input](https://www.elastic.co/guide/en/logstash/current/input-plugins.html), [output](https://www.elastic.co/guide/en/logstash/current/output-plugins.html), [filter](https://www.elastic.co/guide/en/logstash/current/filter-plugins.html)).
+
+```
+input {
+  beats {
+    port => 5044
+  }
+}
+```
+On utilise le module d'entrer beats pour que les logiciels comme filebeat ou winlogbeats puissent envoyer leur données vers logstash.
+
+```
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+  }
+}
+```
+On utilise le module de sortie elasticsearch pour envoyer les données récupérer par Logstash vers une instance de elasticsearch.
+
+
+
 ### FileBeat
 #### Intro
 FileBeat est un agent qui va lire les logs et les envoyers à un serveur. Il peut les envoyers vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
@@ -144,7 +178,8 @@ filebeat.inputs:
     - /var/log/*.log
     # tous les logs qui ce trouve dans le premier dossier du répertoire /var/log
     - /var/log/*/*.log
-  
+  # ajoute à la liste des tags json, utile pour logstash et/ou kibana
+  tags: ["json"]
   # Liste des fichiers à exlure en regex
   exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
 ```
