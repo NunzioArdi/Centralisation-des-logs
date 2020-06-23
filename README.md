@@ -260,6 +260,8 @@ On exécute cette commande
 # filebeat setup --dashboards
 ```
 
+//ToDO
 Gestion des multiligne:
 https://www.elastic.co/guide/en/beats/filebeat/7.8/multiline-examples.html
 https://stackoverflow.com/questions/43932012/filebeat-setting-up-a-multiline-configuration
+patern grok dnf `%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)`
