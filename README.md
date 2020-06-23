@@ -265,3 +265,23 @@ Gestion des multiligne:
 https://www.elastic.co/guide/en/beats/filebeat/7.8/multiline-examples.html
 https://stackoverflow.com/questions/43932012/filebeat-setting-up-a-multiline-configuration
 patern grok dnf `%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)`
+
+```
+filter{
+    if  "dnf" in [tags] {
+      grok {
+          match => [
+            "message", "%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)"
+          ]
+      }
+      # remplace le message original par le message du log
+      # ajoute le nom du program
+      # comme il n'y a pas de facility, un tag sera rajouter
+      mutate {
+        rename => { "message_tmp" => "message" }
+        add_field => { "program" => "dnf" }
+        add_tag => [ "notsyslog" ]
+      }
+    }
+}
+```
