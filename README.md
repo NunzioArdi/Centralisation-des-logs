@@ -313,3 +313,15 @@ end
     }
 }
 ```
+```yml
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/dnf*.log
+  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
+  multiline.negate: true
+  multiline.match: after
+  tags: ["dnf"]
+
+```
