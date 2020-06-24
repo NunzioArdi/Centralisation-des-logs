@@ -351,6 +351,41 @@ end
       }
     }
 }
+filter{
+    if [syslog_version] == "rfc5424" {
+
+        # renome les champs rfc5424 en champs plus lisible
+        # STRUCTURED-DATA sera un simple string au lieux d'un tableau
+        mutate {
+            rename => {
+              "syslog5424_host"  => "hostname"
+              "syslog5424_app"   => "process"
+              "syslog5424_msg"   => "message"
+              "syslog5424_proc"  => "pid"
+              "syslog5424_pri"   => "priority"
+              "syslog5424_msgid" => "msgid"
+              "syslog5424_sd"    => "structured_data"
+            }
+            remove_field => [
+              "syslog5424_ver"
+            ]
+        }
+
+        # ajouter les champs severity et facility
+        ruby {
+          code => 'event.set("severity", event.get("priority").to_i.modulo(8))'
+        }
+        ruby {
+          code => 'event.set("facility", (event.get("priority").to_i / 8).floor)'
+        }
+
+        # la date du log sert de timestamp
+        date {
+            match => [ "syslog5424_ts", "ISO8601" ]
+            remove_field => [ "syslog5424_ts", "timestamp" ]
+      }
+    }
+}
 ```
 ```yml
 - type: log
@@ -366,4 +401,38 @@ end
   paths:
     - /var/log/local/*.log
   exclude_files: ['filebeat.log$']
+```
+
+```
+# Ce qui faudrait pour une entière compatibilité (pas pas necessaire puisque la plupard des app n'utilise pas la STRUCTURED-DATA)
+#
+# STRUCTURED-DATA => [SD-ID1[@digits] name1="value" namen="value"]...[SD-IDn[@digits] name1="value" namen="value"]
+#   |
+#   V
+# "sd": {
+#    "sd1": {
+#       "sd-name": "SD-ID1",
+#       "sd-digits: digits,
+#       "param": {
+#          "name1": "value",
+#           .
+#           .
+#          "namen": "value"
+#          }
+#    }
+#    .
+#    .
+#    "sdn": {
+#       "sd-name": "SD-ID",
+#       "sd-digits: digits,
+#       "param": {
+#          "name1": "value",
+#           .
+#           .
+#          "namen": "value"
+#          }
+#    }
+# }
+#
+# Le problème a été donnée dans une issus github et n'est toujours pas règlé a cause de certains caractères qui complique le parsing
 ```
