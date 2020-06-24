@@ -317,6 +317,7 @@ filter {
 
 filter{
     if  "dnf" in [tags] {
+
       mutate {
         add_field => { "program" => "dnf" }
         add_tag => [ "notsyslog" ]
@@ -328,6 +329,7 @@ filter{
       }
 
 # DDEBUG, les commande utilisé apparaissent, donc severity 5 (notice)
+#
       ruby {
         code => '
 s_t = event.get("severity_text")
@@ -385,6 +387,18 @@ filter{
             remove_field => [ "syslog5424_ts", "timestamp" ]
       }
     }
+}
+input {
+  beats {
+    port => 5044
+    id => "beat_plugin"
+  }
+}
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "test13-%{+YYYY.MM.dd}"
+  }
 }
 ```
 ```yml
