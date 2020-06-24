@@ -270,8 +270,9 @@ patern grok dnf `%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|
 filter{
     if  "dnf" in [tags] {
       grok {
+          pattern_definitions => { "SEVERITY2" => "(CRITICAL|ERROR|WARNING|INFO|DEBUG|DDEBUG|SUBDEBUG)" }
           match => [
-            "message", "%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)"
+            "message", "%{TIMESTAMP_ISO8601:ts} %{SEVERITY2:severity_text} (?<message>(.|\r|\n)*)"
           ]
           overwrite => [ "message" ]
       }
@@ -284,6 +285,30 @@ filter{
       date {
         match => [ "ts", "ISO8601" ]
         remove_field => [ "ts", "timestamp" ]
+      }
+
+# DDEBUG, les commande utilisé apparaissent, donc severity 5 (notice)
+#
+      ruby {
+        code => '
+s_t = event.get("severity_text")
+
+if s_t == "CRITICAL" then
+  event.set("severity", 2)
+elsif s_t == "ERROR" then
+  event.set("severity", 3)
+elsif s_t == "WARNING" then
+   event.set("severity", 4)
+elsif s_t == "INFO" then
+   event.set("severity", 6)
+elsif s_t == "DDEBUG" then
+   event.set("severity", 5)
+elsif s_t == "DEBUG" then
+   event.set("severity", 7)
+elsif s_t == "SUBDEBUG" then
+   event.set("severity", 7)
+end
+'
       }
     }
 }
