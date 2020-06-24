@@ -7,7 +7,20 @@ Un seul fichier de configuration devra être modifié, pour le serveur comme pou
 Les fichiers de logs seront stockés dans le répertoire `/var/log`.<br>
 La configuration serveur présenté utilise la nouvelle notation de rsyslog (≥v7). Néanmoins l’ancienne notation reste compatible; tout du moins pour les templates.
 
-[RFC5424](https://tools.ietf.org/html/rfc5424)<br>
+[RFC5424](https://tools.ietf.org/html/rfc5424)<br>- type: log
+  enabled: true
+  paths:
+    - /var/log/dnf*.log
+  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
+  multiline.negate: true
+  multiline.match: after
+  tags: ["dnf"]
+- type: log
+  enabled: true
+  paths:
+    - /var/log/local/*.log
+  exclude_files: ['filebeat.log$']
+
 [Documentation officiel](https://www.rsyslog.com/doc/master/index.html)
 
 ### Configuration du serveur
@@ -340,7 +353,6 @@ end
 }
 ```
 ```yml
-filebeat.inputs:
 - type: log
   enabled: true
   paths:
@@ -349,5 +361,9 @@ filebeat.inputs:
   multiline.negate: true
   multiline.match: after
   tags: ["dnf"]
-
+- type: log
+  enabled: true
+  paths:
+    - /var/log/local/*.log
+  exclude_files: ['filebeat.log$']
 ```
