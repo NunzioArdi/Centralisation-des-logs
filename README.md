@@ -273,14 +273,17 @@ filter{
           match => [
             "message", "%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)"
           ]
+          overwrite => [ "message" ]
       }
-      # remplace le message original par le message du log
-      # ajoute le nom du program
-      # comme il n'y a pas de facility, un tag sera rajouter
+
       mutate {
-        rename => { "message_tmp" => "message" }
         add_field => { "program" => "dnf" }
         add_tag => [ "notsyslog" ]
+      }
+
+      date {
+        match => [ "ts", "ISO8601" ]
+        remove_field => [ "ts", "timestamp" ]
       }
     }
 }
