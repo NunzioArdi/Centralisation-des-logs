@@ -267,16 +267,43 @@ https://stackoverflow.com/questions/43932012/filebeat-setting-up-a-multiline-con
 patern grok dnf `%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)`
 
 ```
+filter {
+
+    if "grokmatch" not in [tags] {
+        grok {
+            match => [
+              "message", "%{SYSLOG5424LINE}"
+            ]
+            add_tag => ["grokmatch"]
+            add_field => { "syslog_version" => "rfc5424" }
+        }
+    }
+
+    if "grokmatch" not in [tags] {
+        grok {
+            match => [
+                "message", "%{SYSLOGLINE}"
+            ]
+            add_tag => ["grokmatch"]
+            remove_tag => [ "_grokparsefailure" ]
+            add_field => { "syslog_version" => "rfc3164" }
+        }
+    }
+
+    if  "dnf" in [tags] {
+        grok {
+            pattern_definitions => { "SEVERITY2" => "(CRITICAL|ERROR|WARNING|INFO|DEBUG|DDEBUG|SUBDEBUG)" }
+            match => [
+              "message", "%{TIMESTAMP_ISO8601:ts} %{SEVERITY2:severity_text} (?<message>(.|\r|\n)*)"
+            ]
+            overwrite => [ "message" ]
+            add_tag => ["grokmatch"]
+        }
+    }
+}
+
 filter{
     if  "dnf" in [tags] {
-      grok {
-          pattern_definitions => { "SEVERITY2" => "(CRITICAL|ERROR|WARNING|INFO|DEBUG|DDEBUG|SUBDEBUG)" }
-          match => [
-            "message", "%{TIMESTAMP_ISO8601:ts} %{SEVERITY2:severity_text} (?<message>(.|\r|\n)*)"
-          ]
-          overwrite => [ "message" ]
-      }
-
       mutate {
         add_field => { "program" => "dnf" }
         add_tag => [ "notsyslog" ]
@@ -288,7 +315,6 @@ filter{
       }
 
 # DDEBUG, les commande utilisé apparaissent, donc severity 5 (notice)
-#
       ruby {
         code => '
 s_t = event.get("severity_text")
