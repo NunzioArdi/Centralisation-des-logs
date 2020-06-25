@@ -13,7 +13,9 @@ https://docs.google.com/document/d/1lEpMka1-C2_UQQCQyZcDsCgc7ZrrULbU/edit#headin
 https://www.elastic.co/guide/en/logstash/current/plugins-outputs-syslog.html#
 https://github.com/logstash-plugins/logstash-input-syslog/issues/15
 https://qbox.io/blog/logstash-grok-filter-tutorial-patterns
-
+https://www.howtoforge.com/how-to-install-elastic-stack-on-centos-8/
+https://github.com/rpm-software-management/dnf/wiki/Hacking#logging
+xpack: https://stackoverflow.com/questions/54079501/running-elastic-without-the-trial-license
 
 
 #patern RFC
@@ -31,3 +33,4 @@ grep -P: https://perlmaven.com/regex-cheat-sheet
 bash -> if [[ or [: https://stackoverflow.com/questions/3427872/whats-the-difference-between-and-in-bash)
 create systemd https://www.opentechguides.com/how-to/article/centos/169/systemd-custom-service.html
 test tls3 https://www.wolfssl.com/using-curl-wolfssl-tls-1-3/
+logger perso https://real-world-systems.com/docs/logger.1.html
