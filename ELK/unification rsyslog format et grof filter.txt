@@ -16,7 +16,7 @@ https://qbox.io/blog/logstash-grok-filter-tutorial-patterns
 https://www.howtoforge.com/how-to-install-elastic-stack-on-centos-8/
 https://github.com/rpm-software-management/dnf/wiki/Hacking#logging
 xpack: https://stackoverflow.com/questions/54079501/running-elastic-without-the-trial-license
-
+cisco asa logstash: http://www.gregmefford.com/blog/2014/09/24/analyzing-cisco-asa-firewall-logs-with-logstash/
 
 #patern RFC
 https://discuss.elastic.co/t/centos-7-rsyslog-logstash-6-3-0-on-logstash-output-always-severity-code-5-and-facility-code-1-2/140265
