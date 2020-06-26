@@ -86,7 +86,7 @@ local7.*                                                /var/log/boot.log
 *.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
 ```
 
-## Les 2
+## rsyslog client et serveur
 ### Rsyslog
 Peut être mis pour le client pour avoir des log formatés RFC. N'a pas d'impacte sur l'envois pour les clients et sur les anciens logs déjà écrit. Ancienne écriture.
 ```
@@ -111,20 +111,7 @@ Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus
 0 0 * * * root find /var/log -name "*.log" -type f -mtime +60 -delete
 ```
 
-
-## En plus
-### Filebeat
-Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern regroupe les ligne en une seul. 
-```yml
-- type: log
-  paths:
-    - /var/log/dnf*.log
-  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
-  multiline.negate: true
-  multiline.match: after
-  tags: ["dnf"]
-```
-
+## ELK
 ### Logstash
 ```
 input {
@@ -181,8 +168,9 @@ filter {
     }
     
     # test non passé, le log n'est pas conforme pour l'analyse
-    
-#-------------------------------------------------------------    
+  
+  
+#-    
     # mis en forme de dnf
     if "dnf" in [tags] and "_grokparsefailure" not in [tags] {
         mutate {
@@ -253,3 +241,49 @@ end
 
 }
 ```
+
+## En plus
+### Filebeat
+Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern regroupe les ligne en une seul. 
+```yml
+- type: log
+  paths:
+    - /var/log/dnf*.log
+  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
+  multiline.negate: true
+  multiline.match: after
+  tags: ["dnf"]
+```
+
+### Logstash et la rfc5424
+Ce qui faudrait pour une entière compatibilité (pas pas necessaire puisque la plupard des app n'utilise pas la STRUCTURED-DATA).
+Le problème a été donnée dans une issus github et n'est toujours pas règlé a cause de certains caractères qui complique le parsing (notament des `\]``\"` dans value) 
+```
+ STRUCTURED-DATA => [SD-ID1[@digits] name1="value" namen="value"]...[SD-IDn[@digits] name1="value" namen="value"]
+   |
+   V
+ "sd": {
+    "sd1": {
+       "sd-name": "SD-ID1",
+       "sd-digits: digits,
+       "param": {
+          "name1": "value",
+           .
+           .
+          "namen": "value"
+          }
+    }
+    .
+    .
+    "sdn": {
+       "sd-name": "SD-ID",
+       "sd-digits: digits,
+       "param": {
+          "name1": "value",
+           .
+           .
+          "namen": "value"
+          }
+    }
+ }
+ ```
