@@ -244,7 +244,7 @@ end
 
 ## En plus
 ### Filebeat
-Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern regroupe les ligne en une seul. 
+Envois des logs dnf (yum?). Comme ces log peuvent être [multiligne](https://www.elastic.co/guide/en/beats/filebeat/7.8/multiline-examples.html "doc sur le multi lignes"), un paterne regroupe les ligne en une seul. 
 ```yml
 - type: log
   paths:
