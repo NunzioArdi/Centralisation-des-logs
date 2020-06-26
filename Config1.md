@@ -259,7 +259,7 @@ Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern reg
 Ce qui faudrait pour une entière compatibilité (pas pas necessaire puisque la plupard des app n'utilise pas la STRUCTURED-DATA).
 Le problème a été donnée dans une issus github et n'est toujours pas règlé a cause de certains caractères qui complique le parsing (notament des `\]``\"` dans value) 
 ```
- STRUCTURED-DATA => [SD-ID1[@digits] name1="value" namen="value"]...[SD-IDn[@digits] name1="value" namen="value"]
+ STRUCTURED-DATA => [SD-ID1@digits name1="value" namen="value"]...[SD-IDn@digits name1="value" namen="value"]    @digits obtional
    |
    V
  "sd": {
