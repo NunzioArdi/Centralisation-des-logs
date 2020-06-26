@@ -1,5 +1,5 @@
 # Sauvegarde et analyse de log
-Afin d'éviter des problèmes (notamment avec logstash), il est mieux de désactivé SELinux 
+Afin d'éviter des problèmes (notamment avec logstash), il est mieux de désactivé SELinux, et le firewall.
 ## Rsyslog
 ### Intro
 
@@ -7,20 +7,7 @@ Un seul fichier de configuration devra être modifié, pour le serveur comme pou
 Les fichiers de logs seront stockés dans le répertoire `/var/log`.<br>
 La configuration serveur présenté utilise la nouvelle notation de rsyslog (≥v7). Néanmoins l’ancienne notation reste compatible; tout du moins pour les templates.
 
-[RFC5424](https://tools.ietf.org/html/rfc5424)<br>- type: log
-  enabled: true
-  paths:
-    - /var/log/dnf*.log
-  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
-  multiline.negate: true
-  multiline.match: after
-  tags: ["dnf"]
-- type: log
-  enabled: true
-  paths:
-    - /var/log/local/*.log
-  exclude_files: ['filebeat.log$']
-
+[RFC5424](https://tools.ietf.org/html/rfc5424)<br>
 [Documentation officiel](https://www.rsyslog.com/doc/master/index.html)
 
 ### Configuration du serveur
@@ -32,14 +19,14 @@ Décommenter les 2 lignes
 module(load="imudp")
 input(type="imudp" port "514")
 ```
-
+<!---
 - Si SELinux est activé<br>
 `# semanage port -a -t syslogd_port_t -p udp 514`
 
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=514/udp`<br>
 `# firewall-cmd –reload`
-
+-->
 Le serveur peut maintenant recevoir des logs syslog depuis le port 514 en UDP. 
 
 Vient ensuite la configuration de stockage des logs. Les règles que nous allons créer seront appliquées pour les logs des clients
@@ -61,7 +48,7 @@ template(name="modeleFichier" type="list" {
 	constant(value=".log")
 }
 ```
-La [liste des propriétés](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
+La [liste des propriétés](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html "propriétés rsyslog") est disponible dans la documentation.
 
 Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier:
 ```
@@ -88,6 +75,7 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
 En générale, les nouveaux logs ressembleront à ça : `<13>1 2020-06-21T14:55:01.044793+02:00 rsysmachine root 5487 - - un message ecrit par la commande logger`
+
 ### Plus loin
 La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients.
 ```
@@ -99,7 +87,7 @@ if $fromhost-ip == '127.0.0.1' then {
 *.* ?modeleFichier
 ```
 Les fichiers locaux seront enregistrés selon le modèle dynamique `LocalFile`. `stop` (ou `& ~`) signifie que le log s'arrête ici et ne continue pas les autres règles.
-Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres règles.
+Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres.
 
 ## ELK
 La suite elastic comprend de nombreux logiciels: 
@@ -117,16 +105,17 @@ ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de
 
 #### Configuration
 `/etc/elasticsearch/elasticsearch.yml`
-- La configuration suivante ne permet d'accéder à l'API que en local pour éviter que les utilisateurs du réseau puissent accéder à l'API.
+- La configuration suivante ne permet d'accéder à l'API que en local pour éviter que les utilisateurs du réseau puissent accéder à l'API et y faire des modification.
 ```yml
 network.host: localhost
 http.port: 9200
 #discovery.seed_hosts: ["localhost"] #à mettre si network.host est sur une ip local ou autre
 ```
-
+<!--
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=9200/tcp`<br>
 `# firewall-cmd –reload`
+-->
 
 ### Kibana
 #### Intro
@@ -139,9 +128,11 @@ server.port: 5601
 server.host: <IP> #donne accès
 elasticsearch.host: ["<IP_E>:<PORT_E>"]
 ```
+<!--
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=5601/tcp`<br>
 `# firewall-cmd –reload`
+-->
 
 ### Logstash
 #### Intro
@@ -194,7 +185,7 @@ filter {
     }
 }
 ```
-Cette exemple n'est pas concret mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
+Cette config n'est pas concrete mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
 Grok analyser un texte arbitraire et le structure. Il utilise des paternes comme `SYSLOG5424LINE` qui utilise des règles regex. [Liste des paternes](https://grokdebug.herokuapp.com/patterns). Si un log passe un paterne, il sera structuré et chaque donnée sera attribuée à un paramètre. Par exemple:
 ```
 Jun 30 22:45:01 ubuntu dhclient: bound to 192.168.0.1 -- renewal...
@@ -206,11 +197,6 @@ match avec %{SYSLOGLINE} et donne
     ]
   ],
   "logsource": [
-    [
-      "ubuntu"
-    ]
-  ],
-  "HOSTNAME": [
     [
       "ubuntu"
     ]
@@ -244,7 +230,7 @@ Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention 
 
 #### Config
 
-Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-répertoires.
+Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-répertoires. On peut également ajouter plusieur config. La doc sur les input de [type log](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-input-log.html).
 ```yml
 filebeat.inputs:
 - type: log
@@ -257,6 +243,10 @@ filebeat.inputs:
   tags: ["rfc5424"]
   # Liste des fichiers à exclure  en regex
   exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
+- type: log
+  paths: 
+    - /var/log/messages
+  tags: [messages]
 ```
 Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est installé
 ```yml
