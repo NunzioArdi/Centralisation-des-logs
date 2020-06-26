@@ -4,11 +4,15 @@ Cette configuration rend compatible la RFC5424 (et la RFC3164) dans elasticsearc
 
 ![test](config1.png?raw=true)
 
-Config complète en diff
-
 ## Serveur rsyslog 
 
-### Serveur
+```
+/var/log/client/$hostname/$programname_$YEAR$MONTH$DAY.log <-- log des clients
+/var/log/local/programname_$YEAR$MONTH$DAY.log             <-- log du serveur
+/var/log/*                                                         <-- log non syslogger
+```
+
+### Rsyslog
 Config complète
 ```
 module(load="imuxsock" SysSock.Use="off")
@@ -21,14 +25,18 @@ module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format") # RFC 54
 include(file="/etc/rsyslog.d/*.conf" mode="optional")
  
 template(name="TmplMsg" type="list") { # /var/log/clients/%HOSTNAME%/%PROGRAMNAME%.log
-   constant(value="/var/log/clients/")
+    constant(value="/var/log/clients/")
     property(name="hostname")
     constant(value="/")
     property(name="programname" SecurePath="replace")
+    constant(value="_")
+    property(name="$YEAR")
+    property(name="$MONTH")
+    property(name="$DAY")
     constant(value=".log")
 }
 
-template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
+template(name=LocalFile" type="string" string="/var/log/local/%programname%%$YEAR%%$MONTH%%$DAY%_.log")
 if $fromhost-ip == '127.0.0.1' then {
  action(type="omfile" dynafile="LocalFile")
  stop
@@ -37,7 +45,29 @@ if $fromhost-ip == '127.0.0.1' then {
 *.* ?TmplMsg # toutes les Facility et toutes les Severity utilise le template ci-dessus
 ```
 
-### Client
+
+
+### FileBeat
+Config complète.
+Remplacer \<IP_ELK\> par l'ip du serveur ELK.
+```yml
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/local/*.log
+  exclude_file: ['filebeat.log$']
+setup.kibana:
+  host: "<IP_ELK>:5601"
+output.logstash:
+  # The Logstash hosts
+  hosts: ["<IP_ELK>:5044"]
+logging.metrics.enabled: false
+```
+
+## Client
+
+### Rsyslog
 Config complète.
 Pour les ancienns version.<br>
 Remplacer \<IP\> par l'ip du serveur
@@ -63,7 +93,8 @@ module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 *.* @<IP>:514
 ```
 
-### Les 2
+## Les 2
+### Rsyslog
 Peut être mis pour le client pour avoir des log formatés RFC. N'a pas d'impacte sur l'envois pour les clients et sur les anciens logs déjà écrit. Ancienne écriture.
 ```
 #template pour log RFC3164 (pour logstash) si RFC5424 non supporter
@@ -75,43 +106,9 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 
 ```
 
-## Supression de log automatique
-### Serveur rsyslog
+### Supression de log automatique
 Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus de 60 jours
 ```
 # crontab -e
 0 0 * * * root find /var/log -name "*.log" -type f -mtime +60 -delete
-```
-
-## Client beat
-
-### FileBeat sur rsyslog
-Config complète.
-Remplacer \<HOSTNAME\> par le hostname du serveur rsyslog.<br>
-Remplacer \<IP_ELK\> par l'ip du serveur ELK.
-
-```yml
-filebeat.inputs:
-- type: log
-  enabled: true
-  paths:
-    - /var/log/clients/<HOSTNAME>/*.log
-    - /var/log/*.log
-filebeat.config.modules:
-  path: ${path.config}/modules.d/*.yml
-  reload.enabled: false
-setup.template.settings:
-  index.number_of_shards: 1
-setup.kibana:
-  host: "<IP_ELK>:5601"
-output.logstash:
-  # The Logstash hosts
-  hosts: ["<IP_ELK>:5044"]
-processors:
-  - add_host_metadata: ~
-  - add_cloud_metadata: ~
-  - add_docker_metadata: ~
-  - add_kubernetes_metadata: ~
-logging.metrics.enabled: false
-monitoring.enabled: false
 ```
