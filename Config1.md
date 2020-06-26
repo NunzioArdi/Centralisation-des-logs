@@ -4,27 +4,35 @@ Cette configuration rend compatible la RFC5424 (et la RFC3164) dans elasticsearc
 
 ![test](config1.png?raw=true)
 
+Config complète en diff
+
 ## Serveur rsyslog 
 
 ### Serveur
 Config complète
-```diff
+```
 module(load="imuxsock" SysSock.Use="off")
 module(load="imjournal" StateFile="imjournal.state")
-+ module(load="imudp")
-+ input(type="imudp" port="514")
+module(load="imudp")
+input(type="imudp" port="514")
  
 global(workDirectory="/var/lib/rsyslog")
-+ module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format") # RFC 5424
+module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format") # RFC 5424
 include(file="/etc/rsyslog.d/*.conf" mode="optional")
  
-+ template(name="TmplMsg" type="list") { # /var/log/clients/%HOSTNAME%/%PROGRAMNAME%.log
-+    constant(value="/var/log/clients/")
-+     property(name="hostname")
-+     constant(value="/")
-+     property(name="programname" SecurePath="replace")
-+     constant(value=".log")
-+ }
+template(name="TmplMsg" type="list") { # /var/log/clients/%HOSTNAME%/%PROGRAMNAME%.log
+   constant(value="/var/log/clients/")
+    property(name="hostname")
+    constant(value="/")
+    property(name="programname" SecurePath="replace")
+    constant(value=".log")
+}
+
+template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
+if $fromhost-ip == '127.0.0.1' then {
+ action(type="omfile" dynafile="LocalFile")
+ stop
+}
  
 *.* ?TmplMsg # toutes les Facility et toutes les Severity utilise le template ci-dessus
 ```
@@ -33,7 +41,7 @@ include(file="/etc/rsyslog.d/*.conf" mode="optional")
 Config complète.
 Pour les ancienns version.<br>
 Remplacer \<IP\> par l'ip du serveur
-```diff
+```
 *. * @<IP>:514
 
 $ModLoad imuxsock.so
@@ -47,7 +55,7 @@ cron.*                                                  /var/log/cron
 uucp,news.crit                                          /var/log/spooler
 local7.*                                                /var/log/boot.log
  
-+ *.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
+*.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
 ```
 Pour les nouvelles version, juste changer le module et ajouter la dernière ligne
 ```
@@ -65,6 +73,14 @@ $ActionFileDefaultTemplate logstash
 #Utilise la RFC 5424 si possible
 $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 
+```
+
+## Supression de log automatique
+### Serveur rsyslog
+Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus de 60 jours
+```
+# crontab -e
+0 0 * * * root find /var/log -name "*.log" -type f -mtime +60 -delete
 ```
 
 ## Client beat
