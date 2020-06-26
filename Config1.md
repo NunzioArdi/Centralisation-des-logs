@@ -124,3 +124,132 @@ Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern reg
   multiline.match: after
   tags: ["dnf"]
 ```
+
+### Logstash
+```
+input {
+  beats {
+    port => 5044
+    id => "beat_plugin"
+  }
+}
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "linux-%{+YYYY.MM.dd}"
+  }
+}
+```
+
+```
+# 1 tags grokmatch doit apparetre, sinon ça veut dire qu'il n'est pas conforme et qu'il faut lui créer un filtre
+filter {
+
+    # pour les logs DNF
+    if  "dnf" in [tags] {
+        grok {
+            pattern_definitions => { "SEVERITY2" => "(CRITICAL|ERROR|WARNING|INFO|DEBUG|DDEBUG|SUBDEBUG)" }
+            match => [
+              "message", "%{TIMESTAMP_ISO8601:ts} %{SEVERITY2:severity_text} (?<message>(.|\r|\n)*)"
+            ]
+            overwrite => [ "message" ]
+            add_tag => ["grokmatch"]
+        }
+    }
+    
+    # RFC5424
+    if "grokmatch" not in [tags] {
+        grok {
+            match => [
+              "message", "%{SYSLOG5424LINE}"
+            ]
+            add_tag => ["grokmatch"]
+            add_field => { "syslog_version" => "rfc5424" }
+        }
+    }
+
+    # si pas RFC5424, test RFC 3164
+    if "grokmatch" not in [tags] {
+        grok {
+            match => [
+                "message", "%{SYSLOGLINE}"
+            ]
+            add_tag => ["grokmatch"]
+            remove_tag => [ "_grokparsefailure" ]
+            add_field => { "syslog_version" => "rfc3164" }
+        }
+    }
+    
+    # test non passé, le log n'est pas conforme pour l'analyse
+    
+#-------------------------------------------------------------    
+    # mis en forme de dnf
+    if "dnf" in [tags] and "_grokparsefailure" not in [tags] {
+        mutate {
+            add_field => { "program" => "dnf" }
+            add_tag => [ "notsyslog" ]
+        }
+
+        date {
+            match => [ "ts", "ISO8601" ]
+            remove_field => [ "ts", "timestamp" ]
+        }
+
+         # DDEBUG, les commande utilisé apparaissent, donc severity 5 (notice)
+         ruby {
+             code => 's_t = event.get("severity_text")
+if s_t == "CRITICAL" then
+  event.set("severity", 2)
+elsif s_t == "ERROR" then
+  event.set("severity", 3)
+elsif s_t == "WARNING" then
+   event.set("severity", 4)
+elsif s_t == "INFO" then
+   event.set("severity", 6)
+elsif s_t == "DDEBUG" then
+   event.set("severity", 5)
+elsif s_t == "DEBUG" then
+   event.set("severity", 7)
+elsif s_t == "SUBDEBUG" then
+   event.set("severity", 7)
+end
+'
+         }
+    }
+    
+    if [syslog_version] == "rfc5424" {
+
+        # renome les champs rfc5424 en champs plus lisible
+        # STRUCTURED-DATA sera un simple string
+        mutate {
+            rename => {
+              "syslog5424_host"  => "hostname"
+              "syslog5424_app"   => "process"
+              "syslog5424_msg"   => "message"
+              "syslog5424_proc"  => "pid"
+              "syslog5424_pri"   => "priority"
+              "syslog5424_msgid" => "msgid"
+              "syslog5424_sd"    => "structured_data"
+            }
+            remove_field => [
+              "syslog5424_ver"
+            ]
+        }
+
+        # ajouter les champs severity et facility
+        ruby {
+          code => 'event.set("severity", event.get("priority").to_i.modulo(8))'
+        }
+        ruby {
+          code => 'event.set("facility", (event.get("priority").to_i / 8).floor)'
+        }
+
+        # la date du log sert de timestamp
+        date {
+            match => [ "syslog5424_ts", "ISO8601" ]
+            remove_field => [ "syslog5424_ts", "timestamp" ]
+      }
+    }
+
+}
+```
