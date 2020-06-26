@@ -1,48 +1,43 @@
 # Configuration 1
 
-Cette configuration rend compatible la RFC5424 et la RFC3164 dans elasticsearch grace au filtre grok de logstash. La dernière RFC n'étant pas toujours compatible avec les vieux système, une configuration des données pour que les log utilisant l'ancienne RFC soit plus complet.
-
-Les configurations si dessous sont les fichiers complet.
+Cette configuration rend compatible la RFC5424 (et la RFC3164) dans elasticsearch grace au filtre grok de logstash. La RFC5424 n'étant pas toujours compatible avec les vieux système, une configuration des données pour que les log utilisant l'ancienne RFC soit plus complet.
 
 ![test](config1.png?raw=true)
 
 ## Serveur rsyslog 
 
 ### Serveur
-```
+Config complète
+```diff
 module(load="imuxsock" SysSock.Use="off")
 module(load="imjournal" StateFile="imjournal.state")
-module(load="imudp")
-input(type="imudp" port="514")
++ module(load="imudp")
++ input(type="imudp" port="514")
  
 global(workDirectory="/var/lib/rsyslog")
-module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format") # RFC 5424
++ module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format") # RFC 5424
 include(file="/etc/rsyslog.d/*.conf" mode="optional")
  
-template(name="TmplMsg" type="list") { # /var/log/clients/%HOSTNAME%/%PROGRAMNAME%.log
-    constant(value="/var/log/clients/")
-    property(name="hostname")
-    constant(value="/")
-    property(name="programname" SecurePath="replace")
-    constant(value=".log")
-}
++ template(name="TmplMsg" type="list") { # /var/log/clients/%HOSTNAME%/%PROGRAMNAME%.log
++    constant(value="/var/log/clients/")
++     property(name="hostname")
++     constant(value="/")
++     property(name="programname" SecurePath="replace")
++     constant(value=".log")
++ }
  
 *.* ?TmplMsg # toutes les Facility et toutes les Severity utilise le template ci-dessus
 ```
 
 ### Client
+Config complète.
 Pour les ancienns version.<br>
 Remplacer \<IP\> par l'ip du serveur
-```conf
+```diff
 *. * @<IP>:514
 
 $ModLoad imuxsock.so
 $ModLoad imklog.so
- 
-$template logstash, "%timestamp% <%syslogfacility%.%syslogpriority%> %hostname% %programname%: %msg%\n"
- 
-$ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format #Utilise la RFC 5424 si possible
-#$ActionFileDefaultTemplate logstash #Utilise la template au dessus pour enregistrer les facility et les priority (ne le fais pas de base) et rendre compatible avec logstash
  
 *.info;mail.none;authpriv.none;cron.none                /var/log/messages
 authpriv.*                                              /var/log/secure
@@ -52,7 +47,7 @@ cron.*                                                  /var/log/cron
 uucp,news.crit                                          /var/log/spooler
 local7.*                                                /var/log/boot.log
  
-*.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
++ *.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
 ```
 Pour les nouvelles version, juste changer le module et ajouter la dernière ligne
 ```
@@ -60,9 +55,22 @@ module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 *.* @<IP>:514
 ```
 
+### Les 2
+Peut être mis pour le client pour avoir des log formatés RFC. N'a pas d'impacte sur l'envois pour les clients et sur les anciens logs déjà écrit. Ancienne écriture.
+```
+#template pour log RFC3164 (pour logstash) si RFC5424 non supporter
+$template logstash, "%timestamp% <%syslogfacility%.%syslogpriority%> %hostname% %programname%: %msg%\n"
+$ActionFileDefaultTemplate logstash
+
+#Utilise la RFC 5424 si possible
+$ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
+
+```
+
 ## Client beat
 
 ### FileBeat sur rsyslog
+Config complète.
 Remplacer \<HOSTNAME\> par le hostname du serveur rsyslog.<br>
 Remplacer \<IP_ELK\> par l'ip du serveur ELK.
 
