@@ -72,8 +72,6 @@ Config complète.
 Pour les ancienns version.<br>
 Remplacer \<IP\> par l'ip du serveur
 ```
-*. * @<IP>:514
-
 $ModLoad imuxsock.so
 $ModLoad imklog.so
  
@@ -87,11 +85,6 @@ local7.*                                                /var/log/boot.log
  
 *.* @<IP>:514 # toutes les Facility et toutes les Severity sont envoyés à l'ip (en copie)
 ```
-Pour les nouvelles version, juste changer le module et ajouter la dernière ligne
-```
-module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
-*.* @<IP>:514
-```
 
 ## Les 2
 ### Rsyslog
@@ -103,7 +96,12 @@ $ActionFileDefaultTemplate logstash
 
 #Utilise la RFC 5424 si possible
 $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
+```
 
+Pour les nouvelles version, juste changer le module et ajouter la dernière ligne
+```
+module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
+*.* @<IP>:514
 ```
 
 ### Supression de log automatique
@@ -111,4 +109,18 @@ Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus
 ```
 # crontab -e
 0 0 * * * root find /var/log -name "*.log" -type f -mtime +60 -delete
+```
+
+
+## En plus
+### Filebeat
+Envois des logs dnf (yum?). Comme ces log peuvent être multiline, un patern regroupe les ligne en une seul. 
+```yml
+- type: log
+  paths:
+    - /var/log/dnf*.log
+  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
+  multiline.negate: true
+  multiline.match: after
+  tags: ["dnf"]
 ```
