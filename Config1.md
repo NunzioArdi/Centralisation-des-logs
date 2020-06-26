@@ -112,6 +112,20 @@ Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus
 ```
 
 ## ELK
+### Elasticsearch
+```yml
+network.host: localhost
+http.port: 9200
+xpack.license.self_generated.type: basic
+```
+
+### Kibana
+```yml
+server.port: 5601
+server.host: <ip local>
+elasticsearch.hosts: ["http://localhost:9200"]
+```
+
 ### Logstash
 ```
 input {
