@@ -281,7 +281,7 @@ L'intérêt et de pouvoir concervé le format des log original pour récupérer 
 
 ## Supprimer les logs après une date
 ### rsys
-rsys ne peut pas supprimer les logs après une date/un temps donné (ce n'est pas sont rôle). J'ai dont modifier la règle de génération des logs pour qu'un nouveau fichier soit générer à chaque nouveau mois. Une commande cron sera lancé et supprimera les fichiers dont le dernière accès a eu lui x jours. Ce n'est pas la méthode obtimale mais elle devrais fonctionné (tester en générant des fichiers mais pas tester avec cron)
+rsys ne peut pas supprimer les logs après une date/un temps donné (ce n'est pas sont rôle). J'ai dont modifier la règle de génération des logs pour qu'un nouveau fichier soit générer à chaque nouveau jours. Une commande cron sera lancé et supprimera les fichiers dont le dernière accès a eu lui x jours. Ce n'est pas la méthode obtimale mais elle devrais fonctionné (tester en générant des fichiers mais pas tester avec cron)
 
 ### ELK 
 Pas encore regarder mais doit surement disposé d'une option
