@@ -264,7 +264,7 @@ On exécute cette commande
 ```
 
 # En plus / TODO
-## module filbeat
+## module filbeat (todo)
 Les modules filebeat utilisent des paternes et des champs déjà construit et définit. Pour les configurer 
 ```bash
 # filbeat modules enable <NOM_DU_MODULE>
@@ -273,7 +273,7 @@ Ensuite, on édite le fichier de config du module si besoin dans `/etc/filebeat/
 
 Je n'ai pas très bien compris ce principe, il parle a plusieurs reprise de `pipeline`. Les modules sont ensé envoyer par les pipelines vers elasticsearch. Il est apparament possible de configurer pour passé par [logstash](https://www.elastic.co/guide/en/logstash/7.8/use-ingest-pipelines.html "doc modules par logstash") mais je n'ai pas sous la main des logs mysql (j'ai des logs dans mysqld.log mais ne marche pas). La config peut logstash peut être juste indiquer l'output avec un pipeline ou alors appliqué des filtres. Plusieur test sont a faire pour voir comment cela marche. Il est normalment aussi possible d'utilisé geoip pour voir de quel pays viennent les requets.
 
-## Cisco
+## Cisco (todo)
 Il exitse un module cisco filebeat mais lorsque l'on envoie les log sur la machine syslog, elle sont formaté avec rsyslog, ce qui les rend plus difficile a traité avec logstash et incompatble avec le module qui attent des log non formaté par rsys. 2 choix possible: 
 - envoyer les logs cisco sur le serv rsys mais avec un autre port, filebeat à l'air d'accepter de recevoir du syslog (mais il ne seront pas enregister en local)
 - envoyer les logs cisco sur le serv elk  mais il faudra surement utiliser des filtres.
@@ -281,7 +281,10 @@ L'intérêt et de pouvoir concervé le format des log original pour récupérer 
 
 ## Supprimer les logs après une date
 ### rsys
-rsys ne peut pas supprimer les logs après une date/un temps donné (ce n'est pas sont rôle). J'ai dont modifier la règle de génération des logs pour qu'un nouveau fichier soit générer à chaque nouveau jours. Une commande cron sera lancé et supprimera les fichiers dont le dernière accès a eu lui x jours. Ce n'est pas la méthode obtimale mais elle devrais fonctionné (tester en générant des fichiers mais pas tester avec cron)
+rsys ne peut pas supprimer les logs après une date/un temps donné (ce n'est pas sont rôle). J'ai dont modifier la règle de génération des logs pour qu'un nouveau fichier soit générer à chaque nouveau jours. Une commande cron sera lancé et supprimera les fichiers dont le dernière accès a eu lui x jours. Ce n'est pas la méthode obtimale mais elle fonctionne.
 
-### ELK 
+### ELK (todo)
 Pas encore regarder mais doit surement disposé d'une option
+
+## Utiliser ELK (todo)
+Décrire comment utiliser Elasticsearch à l'aide de l'interface Kibana
