@@ -90,7 +90,7 @@ local7.*                                                /var/log/boot.log
 ### Rsyslog
 Peut être mis pour le client pour avoir des log formatés RFC. N'a pas d'impacte sur l'envois pour les clients et sur les anciens logs déjà écrit. Ancienne écriture.
 ```
-#template pour log RFC3164 (pour logstash) si RFC5424 non supporter
+#template pour log RFC3164 (pour logstash) si RFC5424 non supporté
 $template logstash, "%timestamp% <%syslogfacility%.%syslogpriority%> %hostname% %programname%: %msg%\n"
 $ActionFileDefaultTemplate logstash
 
@@ -98,10 +98,9 @@ $ActionFileDefaultTemplate logstash
 $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 ```
 
-Pour les nouvelles version, juste changer le module et ajouter la dernière ligne
+Pour les nouvelles version, juste changer le module
 ```
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
-*.* @<IP>:514
 ```
 
 ### Supression de log automatique
