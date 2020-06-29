@@ -262,3 +262,13 @@ On exécute cette commande
 ```cmd
 # filebeat setup --dashboards
 ```
+
+# En plus / TODO
+## module filbeat
+Les modules filebeat utilisent des paternes et des champs déjà construit et définit. Pour les configurer 
+```bash
+# filbeat modules enable <NOM_DU_MODULE>
+```
+Ensuite, on édite le fichier de config du module si besoin dans `/etc/filebeat/module.d/`. La liste des modules et des paramètres ce trouve dans la [doc](https://www.elastic.co/guide/en/beats/filebeat/master/filebeat-modules.html).
+
+Je n'ai pas très bien compris ce principe, il parle a plusieurs reprise de `pipeline`. Les modules sont ensé envoyer par les pipelines vers elasticsearch. Il est apparament possible de configurer pour passé par [logstash](https://www.elastic.co/guide/en/logstash/7.8/use-ingest-pipelines.html "doc modules par logstash") mais je n'ai pas sous la main des logs mysql (j'ai des logs dans mysqld.log mais ne marche pas). La config peut logstash peut être juste indiquer l'output avec un pipeline ou alors appliqué des filtres. Plusieur test sont a faire pour voir comment cela marche. Il est normalment aussi possible d'utilisé geoip pour voir de quel pays viennent les requets.
