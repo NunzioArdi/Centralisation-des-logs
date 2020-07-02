@@ -222,6 +222,9 @@ Ensuite on regarde si dans le tableau `[tags]` ce trouve la valeur `rfc5424` (qu
 On exécute ensuite un code ruby qui va calculer la severity et la facility et ajouter un couple json `"severity: 5, facility: 4` à la sortie.
 On supprime de la sortie json `syslog5424_pri: 154`, créer par grok.
 
+#### NOTE
+Dans le module ruby, pour récupérer la valueur des champs existant ou en créer, on utilise l'[API Event](https://www.elastic.co/guide/en/logstash/7.8/event-api.html) 
+
 ### FileBeat
 #### Intro
 FileBeat est un agent qui va lire les logs et les envoyer à un serveur. Il peut les envoyer vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
