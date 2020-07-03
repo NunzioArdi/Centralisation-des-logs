@@ -1,5 +1,5 @@
 # Sauvegarde et analyse de log
-Afin d'éviter des problèmes (notamment avec logstash), il est mieux de désactivé SELinux 
+Afin d'éviter des problèmes (notamment avec logstash), il est mieux de désactivé SELinux, et le firewall.
 ## Rsyslog
 ### Intro
 
@@ -7,20 +7,7 @@ Un seul fichier de configuration devra être modifié, pour le serveur comme pou
 Les fichiers de logs seront stockés dans le répertoire `/var/log`.<br>
 La configuration serveur présenté utilise la nouvelle notation de rsyslog (≥v7). Néanmoins l’ancienne notation reste compatible; tout du moins pour les templates.
 
-[RFC5424](https://tools.ietf.org/html/rfc5424)<br>- type: log
-  enabled: true
-  paths:
-    - /var/log/dnf*.log
-  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
-  multiline.negate: true
-  multiline.match: after
-  tags: ["dnf"]
-- type: log
-  enabled: true
-  paths:
-    - /var/log/local/*.log
-  exclude_files: ['filebeat.log$']
-
+[RFC5424](https://tools.ietf.org/html/rfc5424)<br>
 [Documentation officiel](https://www.rsyslog.com/doc/master/index.html)
 
 ### Configuration du serveur
@@ -32,14 +19,14 @@ Décommenter les 2 lignes
 module(load="imudp")
 input(type="imudp" port "514")
 ```
-
+<!---
 - Si SELinux est activé<br>
 `# semanage port -a -t syslogd_port_t -p udp 514`
 
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=514/udp`<br>
 `# firewall-cmd –reload`
-
+-->
 Le serveur peut maintenant recevoir des logs syslog depuis le port 514 en UDP. 
 
 Vient ensuite la configuration de stockage des logs. Les règles que nous allons créer seront appliquées pour les logs des clients
@@ -61,7 +48,7 @@ template(name="modeleFichier" type="list" {
 	constant(value=".log")
 }
 ```
-La [liste des propriétés](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html) est disponible dans la documentation.
+La [liste des propriétés](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html "propriétés rsyslog") est disponible dans la documentation.
 
 Ensuite on ajoute cette ligne qui indique que tous les logs utiliseront le model modeleFichier:
 ```
@@ -88,6 +75,7 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
 En générale, les nouveaux logs ressembleront à ça : `<13>1 2020-06-21T14:55:01.044793+02:00 rsysmachine root 5487 - - un message ecrit par la commande logger`
+
 ### Plus loin
 La configuration peu allez encore plus loin. Par exemple, on peut spécifier pour le serveur de séparer ces logs de ceux des clients.
 ```
@@ -99,7 +87,7 @@ if $fromhost-ip == '127.0.0.1' then {
 *.* ?modeleFichier
 ```
 Les fichiers locaux seront enregistrés selon le modèle dynamique `LocalFile`. `stop` (ou `& ~`) signifie que le log s'arrête ici et ne continue pas les autres règles.
-Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres règles.
+Pour que cette règle puisse bien fonctionner, il faut la mettre avant les autres.
 
 ## ELK
 La suite elastic comprend de nombreux logiciels: 
@@ -117,16 +105,17 @@ ElasticSearch est un moteur distribué de stockage, de recherche et d'analyse de
 
 #### Configuration
 `/etc/elasticsearch/elasticsearch.yml`
-- La configuration suivante ne permet d'accéder à l'API que en local pour éviter que les utilisateurs du réseau puissent accéder à l'API.
+- La configuration suivante ne permet d'accéder à l'API que en local pour éviter que les utilisateurs du réseau puissent accéder à l'API et y faire des modification.
 ```yml
 network.host: localhost
 http.port: 9200
 #discovery.seed_hosts: ["localhost"] #à mettre si network.host est sur une ip local ou autre
 ```
-
+<!--
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=9200/tcp`<br>
 `# firewall-cmd –reload`
+-->
 
 ### Kibana
 #### Intro
@@ -139,9 +128,11 @@ server.port: 5601
 server.host: <IP> #donne accès
 elasticsearch.host: ["<IP_E>:<PORT_E>"]
 ```
+<!--
 - Si le pare-feu est activé<br>
 `# firewall-cmd --permanent --add-port=5601/tcp`<br>
 `# firewall-cmd –reload`
+-->
 
 ### Logstash
 #### Intro
@@ -194,7 +185,7 @@ filter {
     }
 }
 ```
-Cette exemple n'est pas concret mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
+Cette config n'est pas concrete mais sert d'exemple. On utilise ici 3 modules: grok, ruby et mutate. <br>
 Grok analyser un texte arbitraire et le structure. Il utilise des paternes comme `SYSLOG5424LINE` qui utilise des règles regex. [Liste des paternes](https://grokdebug.herokuapp.com/patterns). Si un log passe un paterne, il sera structuré et chaque donnée sera attribuée à un paramètre. Par exemple:
 ```
 Jun 30 22:45:01 ubuntu dhclient: bound to 192.168.0.1 -- renewal...
@@ -206,11 +197,6 @@ match avec %{SYSLOGLINE} et donne
     ]
   ],
   "logsource": [
-    [
-      "ubuntu"
-    ]
-  ],
-  "HOSTNAME": [
     [
       "ubuntu"
     ]
@@ -236,6 +222,9 @@ Ensuite on regarde si dans le tableau `[tags]` ce trouve la valeur `rfc5424` (qu
 On exécute ensuite un code ruby qui va calculer la severity et la facility et ajouter un couple json `"severity: 5, facility: 4` à la sortie.
 On supprime de la sortie json `syslog5424_pri: 154`, créer par grok.
 
+#### NOTE
+Dans le module ruby, pour récupérer la valueur des champs existant ou en créer, on utilise l'[API Event](https://www.elastic.co/guide/en/logstash/7.8/event-api.html) 
+
 ### FileBeat
 #### Intro
 FileBeat est un agent qui va lire les logs et les envoyer à un serveur. Il peut les envoyer vers logstash ou directement vers Elasticsearch. Il comprend en plus des modules qui contiennes des règles déjà faites pour certain type de logs.
@@ -244,7 +233,7 @@ Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention 
 
 #### Config
 
-Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-répertoires.
+Dans la section inputs se trouve une ligne paths avec des tirets. On peut ajouter autant répertoire que l'on veut. La recherche de fichiers ne va pas dans les sous-répertoires. On peut également ajouter plusieur config. La doc sur les input de [type log](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-input-log.html).
 ```yml
 filebeat.inputs:
 - type: log
@@ -257,6 +246,10 @@ filebeat.inputs:
   tags: ["rfc5424"]
   # Liste des fichiers à exclure  en regex
   exclude_files: [ '/var/log/G[A-Za-z0-9]*/.*\.log', '.']
+- type: log
+  paths: 
+    - /var/log/messages
+  tags: [messages]
 ```
 Ensuite on configure la section kibana, avec l'adresse ip sur lequel il est installé
 ```yml
@@ -271,182 +264,4 @@ output.logstash:
 On exécute cette commande
 ```cmd
 # filebeat setup --dashboards
-```
-
-//ToDO
-Gestion des multiligne:
-https://www.elastic.co/guide/en/beats/filebeat/7.8/multiline-examples.html
-https://stackoverflow.com/questions/43932012/filebeat-setting-up-a-multiline-configuration
-patern grok dnf `%{TIMESTAMP_ISO8601:ts} %{WORD:severity_text} (?<message>(.|\r|\n)*)`
-
-```
-filter {
-
-    if "grokmatch" not in [tags] {
-        grok {
-            match => [
-              "message", "%{SYSLOG5424LINE}"
-            ]
-            add_tag => ["grokmatch"]
-            add_field => { "syslog_version" => "rfc5424" }
-        }
-    }
-
-    if "grokmatch" not in [tags] {
-        grok {
-            match => [
-                "message", "%{SYSLOGLINE}"
-            ]
-            add_tag => ["grokmatch"]
-            remove_tag => [ "_grokparsefailure" ]
-            add_field => { "syslog_version" => "rfc3164" }
-        }
-    }
-
-    if  "dnf" in [tags] {
-        grok {
-            pattern_definitions => { "SEVERITY2" => "(CRITICAL|ERROR|WARNING|INFO|DEBUG|DDEBUG|SUBDEBUG)" }
-            match => [
-              "message", "%{TIMESTAMP_ISO8601:ts} %{SEVERITY2:severity_text} (?<message>(.|\r|\n)*)"
-            ]
-            overwrite => [ "message" ]
-            add_tag => ["grokmatch"]
-        }
-    }
-}
-
-filter{
-    if  "dnf" in [tags] {
-
-      mutate {
-        add_field => { "program" => "dnf" }
-        add_tag => [ "notsyslog" ]
-      }
-
-      date {
-        match => [ "ts", "ISO8601" ]
-        remove_field => [ "ts", "timestamp" ]
-      }
-
-# DDEBUG, les commande utilisé apparaissent, donc severity 5 (notice)
-#
-      ruby {
-        code => '
-s_t = event.get("severity_text")
-
-if s_t == "CRITICAL" then
-  event.set("severity", 2)
-elsif s_t == "ERROR" then
-  event.set("severity", 3)
-elsif s_t == "WARNING" then
-   event.set("severity", 4)
-elsif s_t == "INFO" then
-   event.set("severity", 6)
-elsif s_t == "DDEBUG" then
-   event.set("severity", 5)
-elsif s_t == "DEBUG" then
-   event.set("severity", 7)
-elsif s_t == "SUBDEBUG" then
-   event.set("severity", 7)
-end
-'
-      }
-    }
-}
-filter{
-    if [syslog_version] == "rfc5424" {
-
-        # renome les champs rfc5424 en champs plus lisible
-        # STRUCTURED-DATA sera un simple string au lieux d'un tableau
-        mutate {
-            rename => {
-              "syslog5424_host"  => "hostname"
-              "syslog5424_app"   => "process"
-              "syslog5424_msg"   => "message"
-              "syslog5424_proc"  => "pid"
-              "syslog5424_pri"   => "priority"
-              "syslog5424_msgid" => "msgid"
-              "syslog5424_sd"    => "structured_data"
-            }
-            remove_field => [
-              "syslog5424_ver"
-            ]
-        }
-
-        # ajouter les champs severity et facility
-        ruby {
-          code => 'event.set("severity", event.get("priority").to_i.modulo(8))'
-        }
-        ruby {
-          code => 'event.set("facility", (event.get("priority").to_i / 8).floor)'
-        }
-
-        # la date du log sert de timestamp
-        date {
-            match => [ "syslog5424_ts", "ISO8601" ]
-            remove_field => [ "syslog5424_ts", "timestamp" ]
-      }
-    }
-}
-input {
-  beats {
-    port => 5044
-    id => "beat_plugin"
-  }
-}
-output {
-  elasticsearch {
-    hosts => ["localhost:9200"]
-    index => "test13-%{+YYYY.MM.dd}"
-  }
-}
-```
-```yml
-- type: log
-  enabled: true
-  paths:
-    - /var/log/dnf*.log
-  multiline.pattern: '[\d|-]+T[\d|:]+Z\s'
-  multiline.negate: true
-  multiline.match: after
-  tags: ["dnf"]
-- type: log
-  enabled: true
-  paths:
-    - /var/log/local/*.log
-  exclude_files: ['filebeat.log$']
-```
-
-```
-# Ce qui faudrait pour une entière compatibilité (pas pas necessaire puisque la plupard des app n'utilise pas la STRUCTURED-DATA)
-#
-# STRUCTURED-DATA => [SD-ID1[@digits] name1="value" namen="value"]...[SD-IDn[@digits] name1="value" namen="value"]
-#   |
-#   V
-# "sd": {
-#    "sd1": {
-#       "sd-name": "SD-ID1",
-#       "sd-digits: digits,
-#       "param": {
-#          "name1": "value",
-#           .
-#           .
-#          "namen": "value"
-#          }
-#    }
-#    .
-#    .
-#    "sdn": {
-#       "sd-name": "SD-ID",
-#       "sd-digits: digits,
-#       "param": {
-#          "name1": "value",
-#           .
-#           .
-#          "namen": "value"
-#          }
-#    }
-# }
-#
-# Le problème a été donnée dans une issus github et n'est toujours pas règlé a cause de certains caractères qui complique le parsing
 ```
