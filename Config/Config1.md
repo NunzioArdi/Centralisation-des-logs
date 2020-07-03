@@ -103,13 +103,6 @@ Pour les nouvelles version, juste changer le module
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
 
-### Supression de log automatique
-Execute une commande quotidiennement qui supprimes les fichiers log qui ont plus de 60 jours
-```
-# crontab -e
-0 0 * * * root find /var/log -name "*.log" -type f -mtime +60 -delete
-```
-
 ## ELK
 ### Elasticsearch
 ```yml
