@@ -1,3 +1,4 @@
+filebeat.inputs:
   # Exlure anaconda de input all pour ne pas avoir de doublon
 - type: log
   paths:
