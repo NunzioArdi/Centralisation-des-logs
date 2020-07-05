@@ -16,10 +16,10 @@ L'aventage des modules est que la confiurations est déjà faites mais qu'ils so
 
 L'aventage des entrées manuels est que l'on peut configurer touts type de log. Mais il faut ensuite configurer les champs dans logstash pour pouvoir les analyser. 
 
-##### Les modules
+##### modules
 [La liste des modules](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-modules.html).<br>Pour activer un module, utilisé cette commande: `# filebeat modules enables <nom du module>`. La liste des mdolues ce trouve dans le répertoire `/etc/filebeat/module.d/`. Une fois le module activer, on peut édité le fichier de configuration du module.
 
-##### Les entrées
+##### inputs
 [Listes des entrées](https://www.elastic.co/guide/en/beats/filebeat/current/configuration-filebeat-options.html).<br>
 Les entrées que l'on utilisera le plus sont de type log. Pour une entrée, on peut définir plusieurs fichiers, et modifier des paramètres.
 ```
@@ -41,9 +41,14 @@ filebeat.inputs:
 ```
 Dans cette exemples, tous les logs du dossier et du sous dossier `/var/log` seront envoyer avec le tags `rfc5424`, exepter les fichier commencant par la lettre `G` et le fichier `messages`.<br> La deuxième entré envéra les logs du fichier messages sans tags.
 
+Attention: si dans la configuration il y a plusieurs inputs et d'un fichier peut être récupérer par les 2, un log sera envoyer en doublon. 
+
 #### Les sorties
 Plusieurs sortie sont disponibles mais il ne peut en avoir d'une seul. On commente la sortie elasticsearch et on configure la sortie logstash.
 ```
 output.logstash:
   hosts: ["<IP_L>:<PORT>"]
 ```
+
+### Exemple
+Une listes d'exemple est disponible dans le repo
