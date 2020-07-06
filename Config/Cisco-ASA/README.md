@@ -1,7 +1,7 @@
 # Configuration pour récupérer les log des switch Cisco ASA
 Il sera donné les commandes pour que les switch envoie leur logs et une configuration logstash pour les indexer. Un seul problème existe, on ne peut pas envoyer les logs sur plusieur serveur: on ne peut pas les sauvegarder dans le serveur ELK et dans le serveur Rsys. La sauvegarde dans ELK est priviligié pour la partie d'analyse que l'on peut faire.
 
-#3
+[Issue #3](https://github.com/NunzioArdi/cenlogsstage/issues/3)
 
 ## Commandes cisco
 ```
