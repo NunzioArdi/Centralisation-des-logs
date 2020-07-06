@@ -69,8 +69,8 @@ Ce rendre dans *Index Management* puis dans *Index Templates* et enfin dans *Cre
  - Name: Le nom du modèle
  - Index patterns: Applique ce modèle au nom d'index qui match (linux-log*)
 2. Index settings
-Le liens donne toutes les paramètres possible.
-On donne le nom de la politique et le nom d'un alias: il dois être le même que celui du paterne.
+
+On donne le nom de la politique créé juste avant et le nom d'un alias: il dois être le même que celui du paterne.
 ```json
 {
   "index": {
@@ -110,7 +110,7 @@ PUT _template/nom-du-modele?include_type_name
 ```
 
 ## Logstash
-Il faut maintenant indiqué à Logstash de créer des index en utilisant le modèle créé juste avant.
+Il faut maintenant indiqué à Logstash de créer des index en utilisant le modèle créé juste avant. `ilm_rollover_alias` dois avoir le même que celui indiqué dans le modèle.
 Dans un output
 ```
     elasticsearch {
@@ -123,8 +123,9 @@ Les log générés auront ces noms:
 ```
 linux-log-2020-07-01-000001
 |         |          |       
-v         v          v
-Nom du rollover  Date  Indice Rollover
+|         v          v
+v         Date       Indice Rollover
+Rollover alias
 ```
 
 A noté que lorsque le rollover est activé, le paramètre `index` n'est plus utilisé. Ce sont les paramètres `ilm_rollover_alias` et `ilm_pattern` qui définisent le nom du modèle.
