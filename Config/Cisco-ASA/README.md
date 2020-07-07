@@ -22,9 +22,10 @@ Il sera donné les commandes pour que les switch envoie leur logs et une configu
 Un log aura ce format à la sortie (exemple):
 `<190>2020-07-03T15:27:28+02:00: %ASA-6-302016: Teardown UDP connection 2517** for DR6:1**.***.***.***/***** to identity:2**.***.***.***/***** duration 0:00:00 bytes 0`
 ## Logstash
-Les filtres qui seront appliqué provienne de [cette page](https://jackhanington.com/blog/2015/06/16/send-cisco-asa-syslogs-to-elasticsearch-using-logstash/), ils ont été mise à jour et adapter pour fonctionner sur la dernière version d'ELK (7.8) et en fonction de nos besoins.
+Les filtres qui seront appliqué provienne de [cette page](https://jackhanington.com/blog/2015/06/16/send-cisco-asa-syslogs-to-elasticsearch-using-logstash/) et du dépot Git de logstash ils ont été mise à jour et adapter pour fonctionner sur la dernière version d'ELK (7.8) et en fonction de nos besoins.
 La configuration d'exemple ce trouve dans le fichier [cisco-asa.conf](cisco-asa.conf)
-Cette configuration permet d'extraire le maximum d'information à l'aide de filtres fournit par logstash. Il permet aussi d'utilisé geoIP pour utilisé la map de Kibana pour visualisé la provenance des requêtes. Elle utilise aussi pour l'index le système de cycle de vie qui sera à configurer dans l'*Index Template* 
+Cette configuration permet d'extraire le maximum d'information à l'aide de filtres fournit par logstash. Il permet aussi d'utilisé geoIP pour utilisé la map de Kibana pour visualisé la provenance des requêtes. Elle utilise aussi pour l'index le système de cycle de vie qui sera à configurer dans l'*Index Template*.
+Le fichier [sysco-asa](sysco-asa) est quand à lui à ajouter dans le même dossier que les fichier de conf. Il ajoute des pattern utilisé dans la configuration qui ne sont pas présent.
 
 ## Elasticsearch
 Pour pouvoir utiliser correctement toutes ces données, il faut appliqué un mapping sur l'index. Ce code JSON sera à importer dans la création d'index sur Kibana ou a ajouter dans la requête REST Elasticsearch.
@@ -106,5 +107,11 @@ Pour pouvoir utiliser correctement toutes ces données, il faut appliqué un map
   }
 }}
 ```
-### Note
+
+## Note
 Il est possible que certain champs soit oublié. Les champs avec des nombres sont met sur long pour ne pas avoir de problème mais cela pourrait être obtimisé. Tous les champs proviennent des filtre grok inclus dans logstash.
+
+Certain message ASA n'ont pas besoin d'avoir un filtre personalisé; exemple avec ASA-3-444303 ou le message est un code erreur avec un message.
+
+## Ajouter des filtres
+Pour rajouter des filtres sur un log qui n'en aurrai pas, il faut le ciscotag. Il va nous permètre de voir dans la documentation cisco quelle sont les variables. Ensuite on créer la règles grok qui doit pouvoir lire le message du log qui on l'ajoute dans le fichier [syslog-asa](syslog-asa). Enfin on ajoute notre règles grok dans le filtre grok des message cisco.
