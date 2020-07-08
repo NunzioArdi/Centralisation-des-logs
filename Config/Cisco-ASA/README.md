@@ -1,5 +1,5 @@
 # Configuration pour récupérer les log des switch Cisco ASA
-Il sera donné les commandes pour que les switch envoie leur logs et une configuration logstash pour les indexer. Un seul problème existe, on ne peut pas envoyer les logs sur plusieur serveur: on ne peut pas les sauvegarder dans le serveur ELK et dans le serveur Rsys. La sauvegarde dans ELK est priviligié pour la partie d'analyse que l'on peut faire.
+Il sera donné les commandes pour que les switchs envoient leurs logs et une configuration logstash pour les indexer. Un seul problème existe, on ne peut pas envoyer les logs sur plusieurs serveurs: on ne peut pas les sauvegarder dans le serveur ELK et dans le serveur Rsys. La sauvegarde dans ELK est privilégié pour la partie d'analyse que l'on peut faire.
 
 [Issue #3](https://github.com/NunzioArdi/cenlogsstage/issues/3)
 
@@ -14,21 +14,21 @@ Il sera donné les commandes pour que les switch envoie leur logs et une configu
 # exit
 # write
 ```
-- trap: indique la severity maximal des logs. informational est très verbeux mais indique tous ce que les utilisteur fond.
-- facility: si l'on sépare les log cisco du reste, cela n'a d'importance et l'on peut mettre 0.  
-- host: l'ip ou l'on envoie les logs
-- timestamp: ajoute le temps. on peut indiqué d'ecrit le temps dans au format RFC5424 mais cela n'a pas grand intérêt puisque la précision maximal du temps de base est la seconde.
+- trap: indique la severity maximale des logs. informational est très verbeux mais indique tout ce que les utilisateurs fondent.
+- facility: si l'on sépare les logs cisco du reste, cela n'a d'importance et l'on peut mettre 0.  
+- host: l'ip où l'on envoie les logs
+- timestamp: ajoute le temps. On peut indiquer d'écrire le temps dans au format RFC5424 mais cela n'a pas grand intérêt puisque la précision maximale du temps de base est la seconde.
 
 Un log aura ce format à la sortie (exemple):
 `<190>2020-07-03T15:27:28+02:00: %ASA-6-302016: Teardown UDP connection 2517** for DR6:1**.***.***.***/***** to identity:2**.***.***.***/***** duration 0:00:00 bytes 0`
 ## Logstash
-Les filtres qui seront appliqué provienne de [cette page](https://jackhanington.com/blog/2015/06/16/send-cisco-asa-syslogs-to-elasticsearch-using-logstash/) et du dépot Git de logstash ils ont été mise à jour et adapter pour fonctionner sur la dernière version d'ELK (7.8) et en fonction de nos besoins.
-La configuration d'exemple ce trouve dans le fichier [cisco-asa.conf](cisco-asa.conf)
-Cette configuration permet d'extraire le maximum d'information à l'aide de filtres fournit par logstash. Il permet aussi d'utilisé geoIP pour utilisé la map de Kibana pour visualisé la provenance des requêtes. Elle utilise aussi pour l'index le système de cycle de vie qui sera à configurer dans l'*Index Template*.
-Le fichier [sysco-asa](sysco-asa) est quand à lui à ajouter dans le même dossier que les fichier de conf. Il ajoute des pattern utilisé dans la configuration qui ne sont pas présent.
+Les filtres qui seront appliqués proviennent de [cette page](https://jackhanington.com/blog/2015/06/16/send-cisco-asa-syslogs-to-elasticsearch-using-logstash/) et du dépôt git de logstash ils ont été mise à jour et adapté pour fonctionner sur la dernière version d'ELK (7.8) et en fonction de nos besoins.
+La configuration d'exemple se trouve dans le fichier [cisco-asa.conf](cisco-asa.conf)
+Cette configuration permet d'extraire le maximum d'informations à l'aide de filtres fournies par logstash. Il permet aussi d'utiliser geoIP pour utiliser la map de Kibana pour visualiser la provenance des requêtes. Elle utilise aussi pour l'index le système de cycle de vie qui sera à configurer dans l'*Index Template*.
+Le fichier [sysco-asa](sysco-asa) est quand à lui à ajouter dans le même dossier que les fichiers de conf. Il ajoute des patterns utilisés dans la configuration qui ne sont pas présentes.
 
 ## Elasticsearch
-Pour pouvoir utiliser correctement toutes ces données, il faut appliqué un mapping sur l'index. Ce code JSON sera à importer dans la création d'index sur Kibana ou a ajouter dans la requête REST Elasticsearch.
+Pour pouvoir utiliser correctement toutes ces données, il faut appliquer un mapping sur l'index. Ce code JSON sera à importer dans la création d'index sur Kibana où a ajouté dans la requête REST Elasticsearch.
 ```json
 {"_doc":{
   "_meta":{},
@@ -109,9 +109,9 @@ Pour pouvoir utiliser correctement toutes ces données, il faut appliqué un map
 ```
 
 ## Note
-Il est possible que certain champs soit oublié. Les champs avec des nombres sont met sur long pour ne pas avoir de problème mais cela pourrait être obtimisé. Tous les champs proviennent des filtre grok inclus dans logstash.
+Il est possible que certains champs soient oublié. Certains champs avec des nombres sont mis sur *long* pour ne pas avoir de problème mais cela pourrait être optimisé. Tous les champs proviennent des filtres grok inclus dans logstash.
 
-Certain message ASA n'ont pas besoin d'avoir un filtre personalisé; exemple avec ASA-3-444303 ou le message est un code erreur avec un message.
+Certains messages ASA n'ont pas besoin d'avoir un filtre personnalisé; exemple avec ASA-3-444303 ou le message est un code erreur avec un message.
 
 ## Ajouter des filtres
-Pour rajouter des filtres sur un log qui n'en aurrai pas, il faut le ciscotag. Il va nous permètre de voir dans la documentation cisco quelle sont les variables. Ensuite on créer la règles grok qui doit pouvoir lire le message du log qui on l'ajoute dans le fichier [syslog-asa](syslog-asa). Enfin on ajoute notre règles grok dans le filtre grok des message cisco.
+Pour rajouter des filtres sur un log qui n'en aurait pas, il faut le ciscotag. Il va nous permettre de voir dans la documentation cisco qu'elles sont les variables. Ensuite, on créé la règles grok qui doit pouvoir lire le message du log qui on l'ajoute dans le fichier [syslog-asa](syslog-asa). Enfin on ajoute notre règle grok dans le filtre grok des messages cisco.
