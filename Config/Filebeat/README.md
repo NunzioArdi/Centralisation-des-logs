@@ -2,25 +2,24 @@
 FileBeat est un service qui va récupérer les logs d'un client et les envoyers à un serveur. Il peut les envoyer vers logstash ou Elasticsearch.
 
 ## Filebeat
-Filebeat est un client qui va récupérer des fichiers de log. Il peut être utilisé sur GNU/Linux ou Windows.
+Filebeat est un client qui va récupérer des fichiers de logs. Il peut être utilisé sur GNU/Linux ou Windows.
 
 ### Configuration de base
 Le fichier de configuration à éditer: `/etc/filebeat/filebeat.yml`. Attention aux indentations.
 
 #### Les entrées
 Il y a 2 façons de récupérer des fichiers: les inputs et les modules.
-- Les modules sont des configurations déjà faites qui récupère les fichiers spécifiques au module et ajoutes des champs pour simplifier l'analyse.
-- Les inputes sont des configurations manuel
+- Les modules sont des configurations déjà faites qui récupèrent les fichiers spécifiques au module et ajoutes des champs pour simplifier l'analyse.
+- Les inputs sont des configurations manuelles.
 
-L'aventage des modules est que la confiurations est déjà faites mais qu'ils sont limité si l'on veux envoyer d'autres logs. 
+L’avantage des modules est que la configuration est déjà faites mais qu'ils sont limités si l'on veut envoyer d'autres logs.
 
-L'aventage des entrées manuels est que l'on peut configurer touts type de log. Mais il faut ensuite configurer les champs dans logstash pour pouvoir les analyser. 
-
+L’avantage des entrées manuelles est que l'on peut configurer touts type de log. Mais il faut ensuite configurer les champs dans Logstash pour pouvoir les analyser. 
 ##### modules
-[La liste des modules](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-modules.html).<br>Pour activer un module, utilisé cette commande: `# filebeat modules enables <nom du module>`. La liste des mdolues ce trouve dans le répertoire `/etc/filebeat/module.d/`. Une fois le module activer, on peut édité le fichier de configuration du module.
+[La liste des modules](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-modules.html).<br>Pour activer un module, utilisé cette commande: `# filebeat modules enables <nom du module>`. La liste des modules se trouve dans le répertoire `/etc/filebeat/module.d/`. Une fois le module activé, on peut éditer le fichier de configuration du module.
 
 ##### inputs
-[Listes des entrées](https://www.elastic.co/guide/en/beats/filebeat/current/configuration-filebeat-options.html).<br>Les entrées que l'on utilisera le plus sont de type log. Pour une entrée, on peut définir plusieurs fichiers, et configurer plusieurs paramètres comme l'ajout de tags, de champs ou la gestion des multilignes.
+[Listes des entrées](https://www.elastic.co/guide/en/beats/filebeat/current/configuration-filebeat-options.html).<br>Les entrées que l'on utilisera le plus sont de type log. Pour une entrée, on peut définir plusieurs fichiers, et configurer plusieurs paramètres comme l'ajout de tags, de champs ou la gestion des multilingues.
 ```
 filebeat.inputs:
 - type: log
@@ -38,16 +37,16 @@ filebeat.inputs:
     - /var/log/messages
   tags: [messages]
 ```
-Dans cette exemples, tous les logs du dossier et du sous dossier `/var/log` seront envoyer avec le tags `rfc5424`, exepter les fichier commencant par la lettre `G` et le fichier `messages`.<br> La deuxième entré envéra les logs du fichier messages sans tags.
+Dans cet exemple, tous les logs du dossier et du sous-dossier `/var/log` seront envoyé avec le tag `rfc5424`, excepter les fichiers commençant par la lettre `G` et le fichier `messages`.<br>La deuxième entrée enverra les logs du fichier messages sans tags.
 
-Attention: si dans la configuration il y a plusieurs inputs et qu'un fichier peut être récupérer par les 2, un log sera envoyer en doublon. 
+Attention: si dans la configuration il y a plusieurs inputs et qu'un fichier peut  récupéré par les 2, un log sera envoyé en doublon.
 
 #### Les sorties
-Plusieurs sortie sont disponibles mais il ne peut en avoir d'une seul. On commente la sortie elasticsearch et on configure la sortie logstash.
+Plusieurs sorties sont disponibles mais il ne peut en avoir d'une seule. On commente la sortie elasticsearch et on configure la sortie logstash.
 ```
 output.logstash:
   hosts: ["<IP_L>:<PORT>"]
 ```
 
 ### Exemple
-Une listes d'exemple est disponible dans le repo.
+Une liste d'exemples est disponible dans le repo.
