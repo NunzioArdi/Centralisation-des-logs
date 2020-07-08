@@ -3,7 +3,8 @@ Ce dossier regroupe à la fois des exemples de configuration et des documents ex
 
 ## Configuration de transmition des log pour rsys et ELK
 - log de base
-    - [conf logstash][Logstash/filter.log.conf]
+    - [conf rsyslog ](Rsyslog/log_de_base.conf)
+    - [conf logstash](Logstash/filter.log.conf)
 - log DNF (centos 7-8) 
     - [conf filebeat](Filebeat/input.dnf.yml)
     - [conf logstash](Logstash/filter.dnf.conf)
