@@ -27,23 +27,23 @@ Un module active une fonctionnalité, généralement une entrer ou une sortie. D
 ### Les directives et les règles
 L'enregistrement des logs passent par 2 étapes: 
 - on définit quoi prendre (facility et severity)
-- on définit où et comment l'enregistrer ()
+- on définit où et comment l'enregistrer (template)
 Cela donne `facility.level template1;template2`
 
 Prenons cette exemple  `*.info;mail.none;authpriv.none;cron.none                /var/log/messages`<br>
-1. entrée
+1. Entrée
     - Toutes les facility ayant pour severity info(5) ou moins
-    - ne pas inclure les facility mail, authpriv et cron
+    - Ne pas inclure les facility mail, authpriv et cron
 2. Sortie
     - Emplacement statique /var/log/messages
-    - pas de syntaxe indiqué, utilise celle définit par défaut
+    - Pas de syntaxe indiqué, utilise celle définit par défaut
 
 #### Template
 Les modèles définissent où et comment seront enregistrer les logs. Ils peuvent utiliser des propriétés comme le nom du programme, qui sont [lister dans la documentation](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html "liste des propriétés")
  
 
 Le premier donne l'emplacement. Il peut être statique ou dynamique. Pour définir un emplacement dynamique, il faut créer le modèle. Par exemple, pour le serveur, si l'on veut enregistrer tous les logs dans ce format `/var/log/clients/<FROMHOST-IP>/<PROGRAMNAME>.log` pour séparer les logs des différents serveurs, on doit rajouter d’abord rajouter la template, supprimer toutes les autres règles et puis indiquées dans la règle son nom.
-Nouvelle syntaxe
+<br>Nouvelle syntaxe
 ```
 template(name="splitHostname" type="list" {
 	constant(value="/var/log/clients/")
@@ -62,7 +62,7 @@ $template splitHostname,"/var/log/remote2/%FROMHOST-IP%/%PROGRAMNAME%.log"
 Le point d'interrogation indique que la template est dynamique.
 
 Le deuxième définit la façon dont sera écrit le log dans les fichiers. Si il n'est pas indiqué, c'est la directive globale qui est utilisée.
-Nouvelle syntaxe
+<br>Nouvelle syntaxe
 ```
 module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
 ```
@@ -73,7 +73,7 @@ $ActionFileDefaultTemplate RSYSLOG_SyslogProtocol23Format
 Ici, on indique d'écrire les logs avec la syntaxe de la RFC5424. Une liste de modèle comme celui-ce est disponible dans la documentation.
 
 Pour changer le modèle par défaut ou pour en appliquer un de façon spécifique.
-Nouvelle syntaxe
+<br>Nouvelle syntaxe
 ```
 template(name="test" type="string" string="<%PRI%>%TIMESTAMP:::date-rfc3339% %msg%\n")
 *.* ?RemoteLogs;test
@@ -86,7 +86,7 @@ $template test,"<%PRI%>%TIMESTAMP:::date-rfc3339% %msg%\n"
 
 #### Plus loins
 Si l'on veut par exemple séparer les logs des clients du serveur, il suffit de la rajouter avant la règle principale celle-ci
-Nouvelle syntaxe
+<br>Nouvelle syntaxe
 ```
 template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
 if $fromhost-ip == '127.0.0.1' then {
