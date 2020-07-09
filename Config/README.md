@@ -19,3 +19,6 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
     - [conf logstash](Logstash/filter.rfc5424.conf)
 - log cisco-asa
     - [README](Cisco-ASA/README.md)
+
+## Autres configurations
+- [Supression automatique des logs](Suppression-logs)
