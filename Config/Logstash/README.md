@@ -1,5 +1,5 @@
 # Logstash
-Logstash est un logiciel qui sert de pipeline entre les logs et elasticsearch. Il va poouvoirt mettre en forme les entréer pour qu'elasticsearch puisse en tirer le meilleur.
+> Logstash est un moteur de collecte et de traitement des données via plug-in. Il est doté de nombreux plug-ins qui permettent de configurer facilement l'outil pour collecter, traiter et transférer les données dans un grand nombre d'architectures variées.
 
 Voici un log qui arrive en entrée
 ```
@@ -44,9 +44,9 @@ Logstash tourne sur Java il certains paramètres doivent être comfigurer pour l
 
 ## Input
 Configure les [plugins](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html) pour que des données puissent entrer.
-Les plugins que l'on utilisera le plus seront `beats` (pour les lcients beats) et `udp`/`tcp`. Pour les 2, il faut indiquer un port d'entrer pour que les clients puissent envoyer leur données. Il peut très bien avoir plusieur fois un même plugins mais avec d'autres ports.
+Les plugins que l'on utilisera le plus seront `beats` (pour les cients beats) et `udp`/`tcp`. Pour les 2, il faut indiquer un port d'entrer pour que les clients puissent envoyer leur données. Il peut très bien avoir plusieurs fois un même plugins mais avec d'autres ports.
 
-Une option pratique est l'ajout de tags; partique dans les filtres pour faire des conditions.
+Une option pratique est l'ajout de tags; utile dans les filtres pour faire des conditions.
 
 ```
 input {
@@ -95,7 +95,69 @@ output {
    }
 }
 ```
-1 parametre obligatoire: `hosts`. `index` va donnée un nom à l'index dans elasticsearch. `ilm_*` sont des paramètres que l'on vois dans [Supression de log](../Suppression-logs/ILM.md). `manage_template => false` indique que l'on veux un modèle d'index entièrement personalisé.
+1 paramètre obligatoire: `hosts`. `index` va donner un nom à l'index dans elasticsearch. `ilm_*` sont des paramètres que l'on voit dans [Supression de log](../Suppression-logs/ILM.md). `manage_template => false` indique que l'on veut un modèle d'index entièrement personnalisé.
 
 ## Filter
-Configure les [plugins](https://www.elastic.co/guide/en/logstash/current/filter-plugins.html) pour rendre l'analyse du log dans elasticsearch possible. Il y a de nombreux plugins mais certains seront très utils.
+Configure les [plugins](https://www.elastic.co/guide/en/logstash/current/filter-plugins.html) pour rendre l'analyse du log dans elasticsearch possible. Il y a de nombreux plugins mais certains seront très utiles.
+
+### Filtre [Grok](https://www.elastic.co/guide/en/logstash/7.8/plugins-filters-grok.html)
+Analyse un texte arbitraire et le structure.
+C'est comme ça qu'avec un simple log, on peut le décortiquer pour en extraire des information et les mettre dans des champs analysable par elasticsearch. Voici l'exemple donné dans [`filter.anaconda.conf`](filter.anaconda.conf)
+```
+grok {
+   match => [
+      "message", "%{TIME} +%{LOGLEVEL:severity_text} +: +(?<message>(.)*)"
+   ]
+   overwrite => [ "message" ]
+   add_tag => ["grokmatch", "nosyslog"]
+}
+```
+Le paramètre obligatoire est `match` qui va vérifier si le log que l'on récupère correspond au paterne indiqué. `message` indique que la source que l'on veut analyser est le champs message.
+
+
+Grok est un langage qui utilise des règles regex et des paternes pour en sortir des informations. Par exemple dans l'exemple précédent:
+```
+%{TIME} +%{LOGLEVEL:severity_text} +: +(?<message>(.)*)
+|         |                             |            
+|         |                             |-> utilise le paterne personalisé (.)* et met le contenue dans le champ message
+|         |
+|         |->Utiliser le paterne LOGLEVEL et mettre le contenue dans le champ severity_text
+|
+|-> Utilise le pattern prédéfinit TIME
+|
+|-->TIME (?!<[0-9])%{HOUR}:%{MINUTE}(?::%{SECOND})(?![0-9]) => il utilise les paternes HOUR, MINUTE, SECOND
+|
+|--->HOUR (?:2[0123]|[01]?[0-9])
+|--->MINUTE (?:[0-5][0-9])
+|--->SECOND (?:(?:[0-5][0-9]|60)(?:[:.,][0-9]+)?)
+```
+On remarque de `TIME` na pas de sortie, car ici on ne veut pas s'en servir.<br>
+On remarque également que `message` (le message du log) porte le même nom que le champ qui contenait le log original. Pour pouvoir le remplacer, le paramètre `overwrite` est nécessaire.<br>
+Enfin on ajoute 2 tags avec `add_tag` qui est un paramètre générique. Le tag `grokmatch` peut nous servir à faire des conditions. Si le filtre grok échoue, le tag `_grokparsefailure` sera rajouté, modifiable avec le paramètre `tag_on_failure`.
+
+La liste des paternes est disponible dans le [code source](https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns). Pour essayer une règle grok ou les consulter plus facilement, le site http://grokdebug.herokuapp.com/ est très pratique (ATTENTION, le site envoie des requêtes POST). L'outil *grok debugger* est aussi disponible dans kibana. Il est tout à fait possible de rajouter ses propres paternes, en les définissants dans le fichier conf ou en créant un fichier les regroupant tout en indiquant dans la conf d'utiliser ce fichier.
+
+### Filtre [ruby](https://www.elastic.co/guide/en/logstash/7.8/plugins-filters-ruby.html)
+Exécute du code ruby. On peut récupérer la valeur des champs et en créer grâce à l'[API Event](https://www.elastic.co/guide/en/logstash/7.8/event-api.html "Doc sur l'api event") fournis.
+Continuons avec l'exemple précédent. On a créé et mis une valeur dans le champ `severity_text`. Mais anaconda utilise d'autres termes non standard et l'on veut que la severity soit un chiffre. Des commentaires sont mis dans le fichier d'exemple pour comprendre tout ce qui est faits.
+
+### Filtre [date](https://www.elastic.co/guide/en/logstash/7.8/plugins-filters-date.html)
+Change le timestamp en fonction de la date d'un champ. Utile pour que les évènements dans l'index aient le temps original et pas le temps de la réception par Elasticsearch.
+Exemple du [filter.log.conf](filter.log.conf)
+```
+date {
+   match => [ "timestamp", "MMM dd HH:mm:ss", "MMM  d HH:mm:ss"]
+   remove_field => ["timestamp"]
+}
+```
+Le paramètre match à 2 valeurs obligatoires: le champ source et le paterne. Il peut avoir plusieurs paternes comme ici.
+Ensuite on utilise le paramètre générique `remove_field` pour retirer le champ qui contenait le temps du log.
+
+## Performence
+Avoir accès de ram pour évite les ralentissements.
+
+Un article qui explique comment obtimiser les règles grok pour éviter de réduire gravement les performences de recherche regex: https://www.elastic.co/fr/blog/do-you-grok-grok
+
+
+# Citation
+- https://www.elastic.co/fr/blog/a-practical-introduction-to-logstash
