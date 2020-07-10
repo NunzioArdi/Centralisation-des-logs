@@ -1,6 +1,8 @@
 # Configuration
 Ce dossier regroupe à la fois des exemples de configuration et des documents explicants le fonctionnement de certaines fonctionnalités.
 
+Un fichier README est présent dans les dossiers des logiciels pour expliquer leur fonctionnements et présenter des fonctionnalitées.
+
 ## Configuration de transmition des log pour rsys et ELK
 - log de base
     - [conf rsyslog ](Rsyslog/log_de_base.conf)
@@ -16,4 +18,8 @@ Ce dossier regroupe à la fois des exemples de configuration et des documents ex
     - [conf filebeat]
     - [conf logstash](Logstash/filter.rfc5424.conf)
 - log cisco-asa
-    - [README](Cisco-ASA/README.md)
+    - [README](Cisco-ASA)
+
+## Autres tutoriel
+- [Voir les logs](Kibana)
+- [Supression automatique des logs](Suppression-logs)

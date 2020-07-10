@@ -1,13 +1,13 @@
 filebeat.inputs:
-  # Exlure anaconda de input all pour ne pas avoir de doublon
+  # Exclure anaconda de input all pour ne pas avoir de doublon
 - type: log
   paths:
     - /var/log/*.log
   exclude_files: [ 'anaconda.*\.log' ]
   
   # Anaconda log 
-  # support les fichier anaconda(\.(storage|program))?\.log
-  # non supporter anaconda.syslog, anaconda.xlog anaconda.yum.log
+  # supporte les fichiers anaconda(\.(storage|program))?\.log
+  # non supporté anaconda.syslog, anaconda.xlog anaconda.yum.log
 - type: log
   paths: /var/log/anaconda*.log
   multiline.pattern: '^([0-1]?\d|2[0-3])(:[0-5]\d){2},\d{3}\s'

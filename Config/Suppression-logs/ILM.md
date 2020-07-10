@@ -1,5 +1,5 @@
 # Création d'un cycle de vie d'un index (IML)
-La gestion du cycle de vie des index ou Index Lifecycle Management (ILM) permet de gérer les index de leurs création, en passant par leur gestion, à leur supression.
+La gestion du cycle de vie des index ou Index Lifecycle Management (ILM) permet de gérer les index de leurs créations, en passant par leur gestion, à leur supression.
 
 ## Info et Source
 La documention sur les cycles de vide des index ce trouve [ici](https://www.elastic.co/guide/en/elasticsearch/reference/7.8/index-lifecycle-management.html)
@@ -11,19 +11,19 @@ Dans kibana, les manipulations doivent ce faire dans l'onglet *Stask Management*
 ## Créer une politique de cycle de vie
 ### Phase
 Il y a 4 phases, avec la première qui est obligatoire:
-- Hot: Index accessible en ecriture et lecture rapide
+- Hot: Index accessible en écriture et lecture rapide
 - Warm: Index en lecteur seul et lecture rapide
 - Cold: Index en lecteur seul et lecture lente
-- Delete: Supression de l'index
+- Delete: Suppression de l'index
 
-C'est phase servent aussi à réduire le nombre de réplique et à déplacer les shards sur des nodes moins performente pour obtimisé les performences en privilégiant les logs plus récent. 
+Ces phases servent aussi à réduire le nombre de répliques et à déplacer les shards sur des nodes moins performantes pour optimiser les performances en privilégiant les logs plus récents. 
 
 ### Rollover
-Une option également important est le rolllover. (Je n'ai pas bien saisie sont l'intérêt) Il permet de recréer un index (avec un indice incrémentable). Les options de phase ne seront plus basé sur le temps à compter de la création de l'indice mais sur le rollover.
+Une option également importante est le rolllover. Il permet de recréer un index (avec un indice incrémentable). Les options de phase ne seront plus basées sur le temps à compter de la création de l'indice mais sur le rollover.
 
 ### Kibana
 Rendez-vous dans *Index Lifecycle Policies* puis *Create Policy*
-Il suffie de cocher les phases désiré et d'indiqué le temps voulu.
+Il suffit de cocher les phases désirées et d'indiquer le temps voulu.
 
 ### Rest
 Exemple:
@@ -61,16 +61,16 @@ PUT _ilm/policy/nom-de-la-politique
 ```
 
 ## Créer un modèle d'index
-Un modèle d'index sert à attribué à un nouvelle index créé certains paramètres, notament la politique de cycle de vie utilisé ou le mapping des champs. Nous allons ici configurer l'ILM.
+Un modèle d'index sert à attribuer à un nouvel index créé certains paramètres, notamment la politique de cycle de vie utilisé ou le mapping des champs. Nous allons ici configurer l'ILM.
 
 ### Kibana
-Ce rendre dans *Index Management* puis dans *Index Templates* et enfin dans *Create a template*.
+Se rendre dans *Index Management* puis dans *Index Templates* et enfin dans *Create a template*.
 1. Logistics
  - Name: Le nom du modèle
  - Index patterns: Applique ce modèle au nom d'index qui match (linux-log*)
 2. Index settings
 
-On donne le nom de la politique créé juste avant et le nom d'un alias: il dois être le même que celui du paterne.
+On donne le nom de la politique créé juste avant et le nom d'un alias: il doit être le même que celui du paterne.
 ```json
 {
   "index": {
@@ -82,9 +82,9 @@ On donne le nom de la politique créé juste avant et le nom d'un alias: il dois
 }
 ```
 3. Mappings
-Ne nous interesse pas.
+Ne nous intéresse pas.
 4. Aliases
-Ne nous interesse pas.
+Ne nous intéresse pas.
 5. Review template
 Cliquer sur *save template*.
 
@@ -110,7 +110,7 @@ PUT _template/nom-du-modele?include_type_name
 ```
 
 ## Logstash
-Il faut maintenant indiqué à Logstash de créer des index en utilisant le modèle créé juste avant. `ilm_rollover_alias` dois avoir le même que celui indiqué dans le modèle.
+Il faut maintenant indiquer à Logstash de créer des index en utilisant le modèle créé juste avant. `ilm_rollover_alias` dois avoir le même que celui indiqué dans le modèle.
 Dans un output
 ```
     elasticsearch {
@@ -128,7 +128,7 @@ v         Date       Indice Rollover
 Rollover alias
 ```
 
-A noté que lorsque le rollover est activé, le paramètre `index` n'est plus utilisé. Ce sont les paramètres `ilm_rollover_alias` et `ilm_pattern` qui définisent le nom du modèle.
+À noter que lorsque le rollover est activé, le paramètre `index` n'est plus utilisé. Ce sont les paramètres `ilm_rollover_alias` et `ilm_pattern` qui définisent le nom du modèle.
 
 
 <!--
