@@ -5,18 +5,24 @@ CISCOFW725002 Device completed SSL handshake with %{DATA:peer_type} %{DATA:src_i
 CISCOFW725007 SSL session with %{DATA:peer_type} %{DATA:src_interface}:%{IP:src_ip}/%{INT:src_port} to %{IP:dst_ip}/%{INT:dst_port} terminated
 CISCOFW725016 Device selects trust-point %{DATA:trust_point} for %{DATA:peer_type} %{DATA:src_interface}:%{IP:src_ip}/%{INT:src_port} to %{IP:dst_ip}/%{INT:dst_port}
 
-# Perso
+# modèle
 duration2 %{HOUR}h:%{MINUTE}m:%{SECOND}s
 GROUP_USER_IP Group <%{GREEDYDATA:group}> User <%{DATA:user}> IP <%{IP:src_ip}>
 
-CISCOFW113019 Group = %{GREEDYDATA:group}, Username = %{DATA:user}, IP = %{IP:src_ip}, Session disconnected. Session Type:%{DATA:type}, Duration: %{duration2:duration}, Bytes xmt: %{INT:bytes_xmt}, Bytes rcv: %{INT:bytes_rcv}, Reason: %{DATA:reason}
-CISCOFW722007_722014 %{GROUP_USER_IP} SVC Message: %{INT:type-num}/%{WORD}: %{GREEDYDATA:info_message}
+CISCOFW722007_722014 %{GROUP_USER_IP} SVC Message: %{INT:type-num}/%{WORD}: %{GREEDYDATA:info_message} # ASA-3 ASA-5 ASA-6 (7 à 14)
+
+# Perso ASA-6
+CISCOFW722051 %{GROUP_USER_IP} IPv4 Address <%{IP:src_ip}> IPv6 address <%{IP:src_ipv6}> assigned to session
+
+# Perso ASA-5
 CISCOFW722028 %{GROUP_USER_IP} Stale SVC connection closed.
 CISCOFW722032 %{GROUP_USER_IP} New( TCP)? SVC connection replacing old connection.
 CISCOFW722033 %{GROUP_USER_IP} First SVC connection established for SVC session.
 CISCOFW722034 %{GROUP_USER_IP} New( TCP)? SVC connection, no existing connection.
 CISCOFW722037 %{GROUP_USER_IP} SVC closing connection: %{CISCO_REASON:reason}
-CISCOFW722041 TunnelGroup <%{GREEDYDATA:group_tunnel}> GroupPolicy <%{GREEDYDATA:group}> User <%{DATA:user}> IP <%{IP:src_ip}> No IPv6 address available for SVC connection
-CISCOFW722051 %{GROUP_USER_IP} IPv4 Address <%{IP:src_ip}> IPv6 address <%{IP:src_ipv6}> assigned to session
 CISCOFW737003 IPAA: Session=%{GREEDYDATA:session}, DHCP configured, no viable servers found for tunnel-group '%{GREEDYDATA:group_tunnel}'
 CISCOFW737034 IPAA: Session=%{GREEDYDATA:session}, (IPv4|IPv6) address: %{GREEDYDATA:info_message}
+
+# Perso ASA-4
+CISCOFW113019 Group = %{GREEDYDATA:group}, Username = %{DATA:user}, IP = %{IP:src_ip}, Session disconnected. Session Type:%{DATA:type}, Duration: %{duration2:duration}, Bytes xmt: %{INT:bytes_xmt}, Bytes rcv: %{INT:bytes_rcv}, Reason: %{DATA:reason}
+CISCOFW722041 TunnelGroup <%{GREEDYDATA:group_tunnel}> GroupPolicy <%{GREEDYDATA:group}> User <%{DATA:user}> IP <%{IP:src_ip}> No IPv6 address available for SVC connection
