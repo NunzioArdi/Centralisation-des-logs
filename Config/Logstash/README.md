@@ -157,14 +157,14 @@ Ensuite on utilise le paramètre générique `remove_field` pour retirer le cham
 https://www.elastic.co/guide/en/logstash/current/performance-troubleshooting.html
 
 ### RAM
-Il faut avoir assez de ram pour faire fonctionner Logstash. Sinon des ralentissements apparaiterons.
+Il faut avoir assez de ram pour faire fonctionner Logstash. Sinon des ralentissements apparaiterons.<br>
 https://www.elastic.co/guide/en/logstash/current/jvm-settings.html<br>
 https://www.elastic.co/guide/en/logstash/current/tuning-logstash.html#profiling-the-heap
 
 ### Regex
 Les règles regex peuvent prendre pas mal de performence. Un article explique comment obtimiser les règles grok pour éviter de réduire gravement les performences de recherche regex: https://www.elastic.co/fr/blog/do-you-grok-grok
 
-### Pipeline ordonné
+### Pipeline non ordonné
 De base, la lecture de les filtres ce fais dans l'ordre. Mais il est possible de ne pas respecter l'ordre et d'augmenter les performences.
 Ajouter le paramètre `pipeline.ordered: true` dans le fichier de configuration `logstash.yml`.
 *Note*: La configuration fournis à besoin de préserver l'ordre. Ne pas changer ce paramètre.
