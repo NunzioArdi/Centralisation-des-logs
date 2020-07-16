@@ -4,10 +4,10 @@ Ce dossier regroupe à la fois des exemples de configuration et des documents ex
 Un fichier README est présent dans les dossiers des logiciels pour expliquer leur fonctionnements et présenter des fonctionnalitées.
 
 ## Logiciel
-- [Logstash](Logstash)
-- [Filebeat](Filebeat)
-- [Kibana](Kibana)
-- [Rsyslog](Rsyslog)
+- [Logstash](Logstash/)
+- [Filebeat](Filebeat/)
+- [Kibana](Kibana/)
+- [Rsyslog](Rsyslog/)
 
 ## Configuration pour certains types de logs pour rsys et ELK
 - log de base
@@ -24,7 +24,7 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
     - [conf filebeat]
     - [conf logstash](Logstash/filter.rfc5424.conf)
 - log cisco-asa
-    - [README](Cisco-ASA)
+    - [README](Cisco-ASA/)
 
 ## Autres tutoriels
-- [Supression automatique des logs](Suppression-logs)
+- [Supression automatique des logs](Suppression-logs/)

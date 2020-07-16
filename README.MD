@@ -3,7 +3,7 @@ Ce dépôt regroupe de la documentation et des exemples pour configurer 1 serveu
 Cette partie explique l'installation des logiciels et d'une rapide configuration pour les rendres fonctionnelles.
 Les configurations se trouvent dans le dossier [Config](Config).
 
-Ce travail à été réalisé lors du stage de 2nd année du DUT Informatique.
+Ce travail a été réalisé lors du stage de 2nd année du DUT Informatique.
 
 ## Note
 Si la configuration est sur un réseau fermé, penser à désactiver SELinux, les Firewall et de reboot.
@@ -41,8 +41,8 @@ Qu'une seule ligne est nécessaire pour envoyer les logs au serveur. Elle est à
 ```
 
 ## ELK
-Les logiciels d'Elastic peuvent être installé en téléchargent les binaires ou un ajoutant leur dépot. Tout est donné sur les pages de télécharement des logiciels.
-La version des logiciels Elastic utilisé dans cette documentation est la `7.8.0`. La version que l'on télécharge est la version `basic` et non `OSS`. Néanmoins, Elastic a libéré toutes les sources de ces logiciels, même celles réservés aux fonctionnalitées payantes.
+Les logiciels d'Elastic peuvent être installé en téléchargent les binaires ou un ajoutant leur dépôt. Tout est donné sur les pages de téléchargement des logiciels.
+La version des logiciels Elastic utilisé dans cette documentation est la `7.8.0`. La version que l'on télécharge est la version `basic` et non `OSS`. Néanmoins, Elastic a libéré toutes les sources de ces logiciels, même celles réservés aux fonctionnalisées payantes.
 [Elasticsearch](https://www.elastic.co/fr/downloads/elasticsearch),
 [Kibana](https://www.elastic.co/fr/downloads/kibana),
 [Logstash](https://www.elastic.co/fr/downloads/logstash),
@@ -105,5 +105,5 @@ Commenter la partie `output.elasticsearch`
 output.logstash:
   hosts: ["<IP_LOGSTASH>:5044"]
 ```
-Executer le fichier `install-service-winlogbeat.ps1` pour le lancer et l'installer en tant que service.
+Exécuter le fichier `install-service-winlogbeat.ps1` pour le lancer et l'installer en tant que service.
 Ou exécuter le programme `winlogbeat.exe`.
