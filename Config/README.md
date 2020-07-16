@@ -3,7 +3,7 @@ Ce dossier regroupe à la fois des exemples de configuration et des documents ex
 
 Un fichier README est présent dans les dossiers des logiciels pour expliquer leur fonctionnements et présenter des fonctionnalitées.
 
-## Configuration de transmition des log pour rsys et ELK
+## Configuration de transmition des logs pour rsys et ELK
 - log de base
     - [conf rsyslog ](Rsyslog/log_de_base.conf)
     - [conf logstash](Logstash/filter.log.conf)
