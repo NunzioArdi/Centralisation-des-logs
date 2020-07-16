@@ -3,7 +3,13 @@ Ce dossier regroupe à la fois des exemples de configuration et des documents ex
 
 Un fichier README est présent dans les dossiers des logiciels pour expliquer leur fonctionnements et présenter des fonctionnalitées.
 
-## Configuration de transmition des logs pour rsys et ELK
+## Logiciel
+- [Logstash](Logstash)
+- [Filebeat](Filebeat)
+- [Kibana](Kibana)
+- [Rsyslog](Rsyslog)
+
+## Configuration pour certains types de logs pour rsys et ELK
 - log de base
     - [conf rsyslog ](Rsyslog/log_de_base.conf)
     - [conf logstash](Logstash/filter.log.conf)
@@ -20,6 +26,5 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
 - log cisco-asa
     - [README](Cisco-ASA)
 
-## Autres tutoriel
-- [Voir les logs](Kibana)
+## Autres tutoriels
 - [Supression automatique des logs](Suppression-logs)

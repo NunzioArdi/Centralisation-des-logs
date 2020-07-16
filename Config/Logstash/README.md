@@ -37,7 +37,7 @@ Et voila ce qui en sort (partiel) après configuration
 }
 ```
 
-Il y a 3 partie dans la configuration de logstash: input, filter, output. Chaqu'un d'entre peut utilise des plugins inclus pour effectué des opérations.
+Il y a 3 partie dans la configuration de Logstash: input, filter, output. Chaqu'un d'entre peut utilise des plugins inclus pour effectué des opérations.
 
 ## Configuration Java
 Logstash tourne sur Java il certains paramètres doivent être comfigurer pour le faire tourné dans des conditions obtimale. [Doc](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html)
@@ -135,7 +135,8 @@ On remarque de `TIME` na pas de sortie, car ici on ne veut pas s'en servir.<br>
 On remarque également que `message` (le message du log) porte le même nom que le champ qui contenait le log original. Pour pouvoir le remplacer, le paramètre `overwrite` est nécessaire.<br>
 Enfin on ajoute 2 tags avec `add_tag` qui est un paramètre générique. Le tag `grokmatch` peut nous servir à faire des conditions. Si le filtre grok échoue, le tag `_grokparsefailure` sera rajouté, modifiable avec le paramètre `tag_on_failure`.
 
-La liste des paternes est disponible dans le [code source](https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns). Pour essayer une règle grok ou les consulter plus facilement, le site http://grokdebug.herokuapp.com/ est très pratique (ATTENTION, le site envoie des requêtes POST). L'outil *grok debugger* est aussi disponible dans kibana. Il est tout à fait possible de rajouter ses propres paternes, en les définissants dans le fichier conf ou en créant un fichier les regroupant tout en indiquant dans la conf d'utiliser ce fichier.
+La liste des paternes est disponible dans le [code source](https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns) de Logstash. Pour essayer une règle grok, l'outil *Grok Debugger* est disponible dans kibana (*Dev Tools*->*Grok Debugger*). Il est tout à fait possible de rajouter ses propres paternes, en les définissants dans le fichier conf ou en créant un fichier les regroupant tout en indiquant dans la conf d'utiliser ce fichier.<br>
+Le site http://grokdebug.herokuapp.com/ est souvent recommandé, mais il envoie des requêtes POST. Mais il reste pratique pour consulter la liste des paternes.
 
 ### Filtre [ruby](https://www.elastic.co/guide/en/logstash/7.8/plugins-filters-ruby.html)
 Exécute du code ruby. On peut récupérer la valeur des champs et en créer grâce à l'[API Event](https://www.elastic.co/guide/en/logstash/7.8/event-api.html "Doc sur l'api event") fournis.
