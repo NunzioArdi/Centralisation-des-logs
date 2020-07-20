@@ -130,6 +130,9 @@ Rollover alias
 
 À noter que lorsque le rollover est activé, le paramètre `index` n'est plus utilisé. Ce sont les paramètres `ilm_rollover_alias` et `ilm_pattern` qui définisent le nom du modèle.
 
+## Beat
+La configuration du cycle de vie est aussi disponible dans les modules Beat. Par exemple, pour les données metrics, elles seront stocker dans un index et une politique de cycle de vie (nom du module beat) sera créé.
+[Les paramètres de configuration ILM](https://www.elastic.co/guide/en/beats/metricbeat/7.8/ilm.html)
 
 <!--
 Référence
