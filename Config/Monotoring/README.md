@@ -27,8 +27,7 @@ Activer de base
 Il existe 2 méthodes pour envoyer les données des agents Beat au serveur ELK. Soit ils envoient eux même leurs données, soit c'est metricbeat qui ce charge de tout récupérer.
 
 ##### Internal collection
-<img src="monitoring_beat_to_e.png" height="35%">
-<img src="monitoring_beat_to_l.png" height="35%"> <br>
+<img src="monitoring_beat_to_e.png" width="462"> ou  <img src="monitoring_beat_to_l.png" width="462"> <br>
 L'agents Beat envoye ces données.<br>
 Si le agents Beat est configuré pour envoyer des données à la sortie Elasticsearch, une seul ligne n'est qu'a modifier:
 ```yaml
@@ -46,8 +45,7 @@ monitoring
 ```
 
 ##### Metrics Beat
-<img src="monitoring_beat_to_metric_to_e.png" height="30%">
-<img src="monitoring_beat_to_metric_to_l.png" height="30%"> <br>
+<img src="monitoring_beat_to_metric_to_e.png" width="462"> ou  <img src="monitoring_beat_to_metric_to_l.png" width="462"> <br>
 Utilise l'agent Metricbeat pour envoyer les données.<br>
 *Note: non tester*
 
