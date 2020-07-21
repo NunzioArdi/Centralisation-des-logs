@@ -51,7 +51,7 @@ monitoring
 Utilise l'agent Metricbeat pour envoyer les données.<br>
 *Note: non tester*
 
-1. Config d'un agent Beat
+1. Configuration d'un agent Beat
 
 ```yaml
 #/etc/*beat/*beat.yml
@@ -60,7 +60,7 @@ http.port: 5067 #(5066 default port monitoring)
 monitoring.enabled: false
 ```
 
-2. Config de l'agent Metricbeat
+2. Configuration de l'agent Metricbeat
 
 On active le module beat
 ```
@@ -79,14 +79,9 @@ On le configure
 ```
 Puis on configure la sortie (Logstash ou Elasticsearch)
 
+### Note
+Les données de surveillance sont stockées dans un index caché `.monitoring-<programme>-<version>-<date>`.
+*À vérifier:* il semble que ces données s'accumulent et ne soient pas automatiquement supprimées au bout de x temps.
 
-
-
-# draft
-Les options de monitorings sont inclus dans chaque programmes. Il faut les activers en modifiants les paramètres.
-[Les paramètres](https://www.elastic.co/guide/en/beats/filebeat/current/configuration-monitor-legacy.html#)
-. ## Stockage
-Elle sont stocker dans l'index cacher `	.monitoring-<programme>-<version>-<date>`.
-
-https://www.elastic.co/fr/blog/elastic-stack-monitoring-with-metricbeat-via-logstash-or-kafka
-https://www.elastic.co/guide/en/beats/filebeat/current/monitoring-metricbeat-collection.html
+# Source
+- https://www.elastic.co/fr/blog/elastic-stack-monitoring-with-metricbeat-via-logstash-or-kafka
