@@ -77,9 +77,37 @@ On le configure
 ```
 Puis on configure la sortie (Logstash ou Elasticsearch)
 
+### Problème
+Il est possible qu'un agent beat n'apparaisse pas dans la liste principale mais qu'il apparaisse dans un nouveau cluster appelé "*Standalone Cluster*". Pour corriger ce problème ou pour le prévenir, il faut ajouter à la configuration de l'agent beat l'uuid du cluster Elasticsearch que l'on utilise pour le monitoring.
+```json
+GET _cluster/state/version
+{
+  "cluster_name" : "cluster_name",
+  "cluster_uuid" : "*",
+  "version" : 0,
+  "state_uuid" : "*"
+}
+```
+Ensuite, on ajoute l'uuid au fichier de configuration de l'agent beat.
+```yaml
+monitoring:
+  cluster_uuid: "*"
+```
+
 ### Note
 Les données de surveillance sont stockées dans un index caché `.monitoring-<programme>-<version>-<date>`.
 *À vérifier:* il semble que ces données s'accumulent et ne soient pas automatiquement supprimées au bout de x temps.
 
+
+## L'observabiliter
+### Logs
+### Metric
+```
+# metricbeat modules enable <nom_module>
+```
+On va tester avec les modules `elasticsearch-xpack`, `kibana-xpack`, et `system`
+On configure l'output sur elasticsearch.
+### APM
+### Uptime
 # Source
 - https://www.elastic.co/fr/blog/elastic-stack-monitoring-with-metricbeat-via-logstash-or-kafka
