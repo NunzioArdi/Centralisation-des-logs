@@ -95,19 +95,29 @@ monitoring:
 ```
 
 ### Note
-Les données de surveillance sont stockées dans un index caché `.monitoring-<programme>-<version>-<date>`.
+Les données de surveillance sont stockées dans un index caché `.monitoring-<PROGRAMME>-<VERSION>-<DATE>`.<br>
 *À vérifier:* il semble que ces données s'accumulent et ne soient pas automatiquement supprimées au bout de x temps.
 
-
 ## L'observabiliter
+*Note: brouillon*
 ### Logs
+Ces logs seront stocker dans l'index `filebeat-<VERSION>-<DATE>-<ROLLOVER>`
 ### Metric
+Pour ajouter des données metric, il faut installer l'agent Beat Metricbeat.
 ```
 # metricbeat modules enable <nom_module>
 ```
-On va tester avec les modules `elasticsearch-xpack`, `kibana-xpack`, et `system`
+On va tester avec les modules `elasticsearch-xpack`, `logstash-xpack`, et `system`.<br>
+Modifier si necessaire l'host dans les fichiers de configuration des modules `/etc/metricbeat/module.d/<nom_module>`.<br>
 On configure l'output sur elasticsearch.
+
+Ces logs seront stocker dans l'index `metricbeat-<VERSION>-<DATE>-<ROLLOVER>`
+
 ### APM
 ### Uptime
+
+
 # Source
 - https://www.elastic.co/fr/blog/elastic-stack-monitoring-with-metricbeat-via-logstash-or-kafka
+- https://discuss.elastic.co/t/filebeat-creates-a-standalone-cluster-in-kibana-monitoring/188663/5
+
