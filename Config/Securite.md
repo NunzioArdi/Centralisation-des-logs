@@ -66,65 +66,76 @@ password => "<mot-de-passe>"
 ```
 
 ### Agent Beat
-*Brouillon, ne marche pas*
-#### Setup
-
-
+On crée un rôle pour setup les index templates, les dashboards, etc.
+La partie indice peut être modifier en fonction des indices que l'on a besoin. 
 ```json
-POST _security/user/beat_setup
+PUT _security/role/beats_setup
 {
-  "password" : "<mot-de-passe>",
-  "roles" : [ "kibana_admin", "ingest_admin", "beats_admin"],
-  "full_name" : "Utilisateur de setup des Beat"
-}
-```
-```json
-POST _security/role/winlogbeat_writer
-{
-  "cluster": ["monitor", "read_ilm"], 
+  "cluster": [ "monitor", "manage_ilm", "manage_ml", "indices:admin/template/put" ],
   "indices": [
     {
-      "names": [ "winlogbeat-*" ], 
-      "privileges": ["create_doc","view_index_metadata","create_index"]  
+      "names": [ "filebeat-*" ],
+      "privileges": [ "manage", "read" ]
+    },
+    {
+      "names": [ "winlogbeat-*" ],
+      "privileges": [ "manage", "read" ]
+    },
+    {
+      "names": [ "metricbeat-*" ],
+      "privileges": [ "manage" ]
+    },
+    {
+      "names": [ "heartbeat-*" ],
+      "privileges": [ "manage" ]
     }
-  ]
+  ],
+  "metadata" : { "version" : 1 },
+  "transient_metadata": { "enabled": true }
 }
 ```
+
+On crée un rôle pour que les données puissent être envoyer au indices (Si l'envoie se fait par Elasticsearch)
 ```json
-POST _security/user/winlogbeat_internal
+PUT /_security/role/beats_writer
+{
+  "cluster": [ "monitor", "cluster:admin/ingest/pipeline/get", "read_ilm", "manage_index_templates"],
+  "indices": [
+    {
+      "names": [ "filebeat-*" ],
+      "privileges": [ "create_doc", "view_index_metadata" ]
+    },
+    {
+      "names": [ "winlogbeat-*" ],
+      "privileges": [ "create_doc", "view_index_metadata" ]
+    },
+    {
+      "names": [ "metricbeat-*" ],
+      "privileges": [ "create_doc", "view_index_metadata" ]
+    },
+    {
+      "names": [ "heartbeat-*" ],
+      "privileges": [ "create_doc", "view_index_metadata" ]
+    }
+  ],
+  "metadata" : { "version" : 1 },
+  "transient_metadata": { "enabled": true }
+}
+```
+
+Enfin on crée un utilisateur pour le client beat
+```json
+POST _security/user/beats_internal
 {
   "password" : "<mot-de-passe>",
-  "roles" : [ "winlogbeat_writer"],
-  "full_name" : "Internal Winlogbeat User"
-}
-```
-<style>
-.red {
-  color: red;
-}
-</style>
-
-*Erreur, winlogbeat*
-```json
-{
-  "error": {
-    "root_cause": [
-      {
-        "type": "security_exception",
-        "reason": "action [indices:admin/template/put] is unauthorized for user [winlogbeat_internal]"
-      }
-    ],
-    "type": "security_exception",
-    "reason": "action [indices:admin/template/put] is unauthorized for user [winlogbeat_internal]"
-  },
-  "status": 403
+  "roles" : [ "kibana_admin", "ingest_admin", "beats_admin", "beats_setup", "beats_writer"],
+  "full_name" : "Utilisateur pour client Beat"
 }
 ```
 
 
-
-
-# Source
+## Source
 - https://www.elastic.co/guide/en/elasticsearch/reference/7.8/configuring-security.html
 - https://www.elastic.co/guide/en/kibana/current/kibana-authentication.html
 - https://www.elastic.co/guide/en/logstash/current/ls-security.html
+- https://github.com/elastic/beats/issues/10241#issuecomment-511943737
