@@ -10,23 +10,23 @@ Le monitoring permet de connaitre le nombre de logiciels ELK actifs, leur état 
 
 ### Configuration
 #### Elasticsearch
-Il faut rajouter ce paramètre dans le fichier de configuration
+Pour activer cette fonctionnalité, il faut rajouter ce paramètre dans le fichier de configuration:
 ```yaml
 #/etc/elasticsearch/elasticsearch.yml
 xpack.monitoring.collection.enabled: true
 ```
 
 #### Kibana
-Activer de base.
-Il est possible de modifier des paramètres dans le fichier de configuration en rapport avec le monitoring et l'affichage mais nous en n'avons pas besoin.
+Le monitoring est activer par défaut. Il est possible de modifier des paramètres dans le fichier de configuration `/etc/kibana/kibana.yml` en rapport avec le monitoring et l'affichage, mais nous en n'avons pas besoin.
 
 #### Logstash
-Activer de base
+Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par logstash (legacy), soit en passant par l'agent Metricbeat. <br>
+Le monitoring est activer de base si une sortie logstash est spécifier dans une pipeline.<sup>A vérifier</sup>. Mais il est possible de configurer le monotoring dans le fichier de configuration `/etc/logstash/logstash.yml`
 
 #### Beat
-Il existe 2 méthodes pour envoyer les données des agents Beat au serveur ELK. Soit ils envoient eux même leurs données, soit c'est metricbeat qui ce charge de tout récupérer.
+Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par lui même (legacy), soit en passant par l'agent Metricbeat.
 
-##### Internal collection
+##### Legacy
 <img src="monitoring_beat_to_e.png" width="462"> ou  <img src="monitoring_beat_to_l.png" width="462"> <br>
 L'agents Beat envoye ces données.<br>
 Si le agents Beat est configuré pour envoyer des données à la sortie Elasticsearch, une seul ligne n'est qu'a modifier:
@@ -38,15 +38,14 @@ monitoring.enabled: true
 Si le agents Beat n'est pas configuré pour envoyer des données à la sortie Elasticsearch:
 ```yaml
 #/etc/*beat/*beat.yml
-monitoring
-  enabled: true
-  elasticsearch:
-    hosts: ["https://example2.com:9200"]
+monitoring.enabled: true
+monitoring.elasticsearch:
+  hosts: ["https://example2.com:9200"]
 ```
 
-##### Metrics Beat
+##### Metricbeat
 <img src="monitoring_beat_to_metric_to_e.png" width="462"> ou  <img src="monitoring_beat_to_metric_to_l.png" width="462"> <br>
-Utilise l'agent Metricbeat pour envoyer les données.<br>
+Utilise l'agent Metricbeat pour envoyer les données.<br> 
 *Note: non tester*
 
 1. Configuration d'un agent Beat
@@ -78,25 +77,26 @@ On le configure
 Puis on configure la sortie (Logstash ou Elasticsearch)
 
 ### Problème
-Il est possible qu'un agent beat n'apparaisse pas dans la liste principale mais qu'il apparaisse dans un nouveau cluster appelé "*Standalone Cluster*". Pour corriger ce problème ou pour le prévenir, il faut ajouter à la configuration de l'agent beat l'uuid du cluster Elasticsearch que l'on utilise pour le monitoring.
+Il est possible qu'un agent beat n'apparaisse pas dans le cluster principale mais dans un autre cluster appelé "*Standalone Cluster*". Pour corriger ce problème ou pour le prévenir, il faut ajouter à la configuration de l'agent beat l'uuid du cluster Elasticsearch que l'on utilise pour le monitoring.
 ```json
 GET _cluster/state/version
 {
-  "cluster_name" : "cluster_name",
-  "cluster_uuid" : "*",
+  "cluster_name" : "<cluster_name>",
+  "cluster_uuid" : "<cluster_uuid>",
   "version" : 0,
-  "state_uuid" : "*"
+  "state_uuid" : "<state_uuid>"
 }
 ```
 Ensuite, on ajoute l'uuid au fichier de configuration de l'agent beat.
 ```yaml
 monitoring:
-  cluster_uuid: "*"
+  cluster_uuid: "<cluster_uuid>"
 ```
 
 ### Note
 Les données de surveillance sont stockées dans un index caché `.monitoring-<PROGRAMME>-<VERSION>-<DATE>`.<br>
 *À vérifier:* il semble que ces données s'accumulent et ne soient pas automatiquement supprimées au bout de x temps.
+La gestion du cycle de vie des données de monitoring est une fonctionnalité x-pack.
 
 ## L'observabiliter
 *Note: brouillon*
@@ -120,4 +120,3 @@ Ces logs seront stocker dans l'index `metricbeat-<VERSION>-<DATE>-<ROLLOVER>`
 # Source
 - https://www.elastic.co/fr/blog/elastic-stack-monitoring-with-metricbeat-via-logstash-or-kafka
 - https://discuss.elastic.co/t/filebeat-creates-a-standalone-cluster-in-kibana-monitoring/188663/5
-
