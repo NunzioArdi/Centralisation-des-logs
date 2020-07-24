@@ -1,7 +1,8 @@
 # Sécurité
 
 *Note: La sécurité est une option x-pack mais la plupart des options sont inclues dans la licence basique*
-
+Il existe plusieurs options de sécurité dans la suite ELK. Les activés permet aussi de débloqué quelques options.
+Il est possible de sécurisé la connection par mot de passe, par token, de rajouter des certificats ssl, 
 ## Connection par mot de passe
 Pour pouvoir accéder à l'interface kibana et que pour les programmes ELK utilisent une connexion.
 
@@ -133,9 +134,13 @@ POST _security/user/beats_internal
 }
 ```
 
+## En plus
+*Partie pas encore expliqué mais peu être utils*
+- https://www.elastic.co/guide/en/beats/filebeat/current/keystore.html
 
 ## Source
 - https://www.elastic.co/guide/en/elasticsearch/reference/7.8/configuring-security.html
 - https://www.elastic.co/guide/en/kibana/current/kibana-authentication.html
 - https://www.elastic.co/guide/en/logstash/current/ls-security.html
+- https://discuss.elastic.co/t/permissions-for-beats/219437/3
 - https://github.com/elastic/beats/issues/10241#issuecomment-511943737
