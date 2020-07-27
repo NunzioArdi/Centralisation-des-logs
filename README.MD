@@ -13,7 +13,7 @@ Si la configuration est sur un réseau fermé, penser à désactiver SELinux, le
 Un script est disponible pour installer automatiquement les logiciels sur Centos 7 et 8
 
 ## Source
-La plupart des informations proviennent de la documentation et du blog officiel. Toutes les autres sources sont citées, soit à la fin, soit dans le texte.
+La plupart des informations proviennent des documentations officiel. Toutes les autres sources sont citées, soit à la fin du document, soit dans le texte.
 
 ## Rsyslog
 Fichier de configuration serveur et client : `/etc/rsyslog.conf`.

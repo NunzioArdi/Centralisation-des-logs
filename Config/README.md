@@ -28,3 +28,5 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
 
 ## Autres tutoriels
 - [Supression automatique des logs](Suppression-logs/)
+- [Sécuriter](Securite.md)
+- [Monitoring](Monitoring/)
