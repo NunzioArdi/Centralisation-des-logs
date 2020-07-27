@@ -21,7 +21,13 @@ Le monitoring est activer par défaut. Il est possible de modifier des paramètr
 
 #### Logstash
 Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par logstash (legacy), soit en passant par l'agent Metricbeat. <br>
-Le monitoring est activer de base si une sortie logstash est spécifier dans une pipeline.<sup>A vérifier</sup>. Mais il est possible de configurer le monotoring dans le fichier de configuration `/etc/logstash/logstash.yml`
+La configuration du monotoring dans le fichier de configuration :
+```yaml
+#/etc/logstash/logstash.yml
+monitoring.enabled: true
+monitoring.elasticsearch:
+  hosts: ["https://example2.com:9200"]
+```
 
 #### Beat
 Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par lui même (legacy), soit en passant par l'agent Metricbeat.
