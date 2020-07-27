@@ -165,6 +165,8 @@ Pour que cela puisse marcher:
 - déplacer le fichiers `winlogbeat.keystore` du dossier data dans `C:\ProgramData\winlogbeat`
 - changer la configuration des dossiers du fichier `install-service-winlogbeat.ps1` pour qu'il utilise le dossier courrant
 
+#### Logstash
+La manipulation déffère légérement: https://www.elastic.co/guide/en/logstash/current/keystore.html
 ## Source
 - https://www.elastic.co/guide/en/elasticsearch/reference/7.8/configuring-security.html
 - https://www.elastic.co/guide/en/kibana/current/kibana-authentication.html
