@@ -9,6 +9,11 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
 - [Kibana](Kibana/)
 - [Rsyslog](Rsyslog/)
 
+## Autres tutoriels
+- [Supression automatique des logs](Suppression-logs/)
+- [Sécuriter](Securite.md)
+- [Monitoring](Monitoring/)
+
 ## Configuration pour certains types de logs pour rsys et ELK
 - log de base
     - [conf rsyslog ](Rsyslog/log_de_base.conf)
@@ -25,8 +30,3 @@ Un fichier README est présent dans les dossiers des logiciels pour expliquer le
     - [conf logstash](Logstash/filter.rfc5424.conf)
 - log cisco-asa
     - [README](Cisco-ASA/)
-
-## Autres tutoriels
-- [Supression automatique des logs](Suppression-logs/)
-- [Sécuriter](Securite.md)
-- [Monitoring](Monitoring/)

@@ -10,7 +10,7 @@ Si la configuration est sur un réseau fermé, penser à désactiver SELinux, le
 ```
 # sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 ```
-Un script est disponible pour installer automatiquement les logiciels sur Centos 7 et 8
+Un script est disponible pour installer automatiquement les logiciels sur Centos 7 et 8 (archive)
 
 ## Source
 La plupart des informations proviennent des documentations officiel. Toutes les autres sources sont citées, soit à la fin du document, soit dans le texte.
@@ -45,7 +45,7 @@ Qu'une seule ligne est nécessaire pour envoyer les logs au serveur. Elle est à
 
 ## ELK
 Les logiciels d'Elastic peuvent être installé en téléchargent les binaires ou un ajoutant leur dépôt. Tout est donné sur les pages de téléchargement des logiciels.
-La version des logiciels Elastic utilisé dans cette documentation est la `7.8.0`. La version que l'on télécharge est la version `basic` et non `OSS`. Néanmoins, Elastic a libéré toutes les sources de ces logiciels, même celles réservés aux fonctionnalisées payantes.
+La version des logiciels Elastic utilisé dans cette documentation est la `7.8.1`. La version que l'on télécharge est la version `basic` et non `OSS`. Néanmoins, Elastic a libéré toutes les sources de ces logiciels, même celles réservés aux fonctionnalisées payantes.
 [Elasticsearch](https://www.elastic.co/fr/downloads/elasticsearch),
 [Kibana](https://www.elastic.co/fr/downloads/kibana),
 [Logstash](https://www.elastic.co/fr/downloads/logstash),
