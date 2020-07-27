@@ -134,6 +134,16 @@ POST _security/user/beats_internal
 }
 ```
 
+### Monitoring 
+Si le monitoring est activé, il faut modifier des paramètres pour autorisé l'envoie de donnée. Elasticsearch intègres des compte dédié a cette tâche. Ces comptes sont: `beats_system`, `logstash_system`, `kibana_system` et `apm_system`.
+
+Il suffit de rajouter ces lignes:
+```yaml
+monitoring.elasticsearch:
+  username: "beats_system"
+  password: "<mot_de_passe>"
+```
+
 ## En plus
 *Partie pas encore expliqué mais peu être utils*
 - https://www.elastic.co/guide/en/beats/filebeat/current/keystore.html
