@@ -16,8 +16,8 @@ xpack.monitoring.collection.enabled: true
 Le monitoring est activer par défaut. Il est possible de modifier des paramètres dans le fichier de configuration `/etc/kibana/kibana.yml` en rapport avec le monitoring et l'affichage, mais nous en n'avons pas besoin.
 
 ### Logstash
-Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par logstash (legacy), soit en passant par l'agent Metricbeat. <br>
-La configuration du monotoring dans le fichier de configuration :
+Il existe 2 méthodes pour envoyer les données de monitoring. Soit en passant par logstash (legacy), soit en passant par l'agent Metricbeat. <br>
+La configuration du monitoring dans le fichier de configuration :
 ```yaml
 #/etc/logstash/logstash.yml
 xpack.monitoring.enabled: true
@@ -26,7 +26,7 @@ xpack.monitoring.elasticsearch:
 ```
 
 ### Beat
-Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant par lui même (legacy), soit en passant par l'agent Metricbeat.
+Il existe 2 méthodes pour envoyer les données de monitoring. Soit en passant par lui même (legacy), soit en passant par l'agent Metricbeat.
 
 #### Legacy
 <img src="monitoring_beat_to_e.png" width="462"> ou  <img src="monitoring_beat_to_l.png" width="462"> <br>
