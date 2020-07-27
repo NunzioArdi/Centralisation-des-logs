@@ -24,8 +24,8 @@ Il existe 2 méthodes pour envoyer les données de monotoring. Soit en passant p
 La configuration du monotoring dans le fichier de configuration :
 ```yaml
 #/etc/logstash/logstash.yml
-monitoring.enabled: true
-monitoring.elasticsearch:
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch:
   hosts: ["https://example2.com:9200"]
 ```
 
