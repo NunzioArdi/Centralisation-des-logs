@@ -102,4 +102,10 @@ Les fichiers locaux seront enregistrés selon le modèle dynamique `LocalFile`. 
 
 ## A voir
 *Ce que je n'ai pas ecrit mais qui est intéressant a voir*
-[Module input file](https://rsyslog.readthedocs.io/en/latest/configuration/modules/imfile.html). Permet d'ajouter des fichiers au log (comme les log d'un site apache) qui ne passe pas par syslog. Cela résoudrait peu être le problème de ces logs pour pouvoir tout centraliser.
+- [Module input file](https://rsyslog.readthedocs.io/en/latest/configuration/modules/imfile.html). Permet d'ajouter des fichiers au log (comme les log d'un site apache) qui ne passe pas par syslog. Cela résoudrait peu être le problème de ces logs pour pouvoir tout centraliser.
+
+- Pour les logs windows:
+  - rsyslog propose un client windows mais il semble [payant](https://www.rsyslog.com/windows-agent/edition-comparison/)
+  - L'agent Winlogbeat mais l'envoie est limité à Elasticsearch ou Logstash. Comme  plusieurs host peuvent être indiquer dans la sortie logstash, il serait possible d'installer logstash sur le serveur rsys et d'utiliser le plugin d'output [syslog](https://www.elastic.co/guide/en/logstash/current/plugins-outputs-syslog.html) pour l'envoyer à rsyslog. L'aventage est que winlogbeat peut toujours envoyer ces log au serveur ELK.
+  - [Eventsys]( https://code.google.com/archive/p/eventlog-to-syslog/downloads)
+  - [nxlog](https://nxlog.co/) 
