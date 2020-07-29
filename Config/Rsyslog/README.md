@@ -99,3 +99,7 @@ Ancienne syntaxe
 ```
 ```
 Les fichiers locaux seront enregistrés selon le modèle dynamique `LocalFile`. `stop` (ou `& ~` pour l'ancienne syntaxe) signifie que le log s'arrête ici et ne continue pas les autres règles.
+
+## A voir
+*Ce que je n'ai pas ecrit mais qui est intéressant a voir*
+[Module input file](https://rsyslog.readthedocs.io/en/latest/configuration/modules/imfile.html). Permet d'ajouter des fichiers au log (comme les log d'un site apache) qui ne passe pas par syslog. Cela résoudrait peu être le problème de ces logs pour pouvoir tout centraliser.
