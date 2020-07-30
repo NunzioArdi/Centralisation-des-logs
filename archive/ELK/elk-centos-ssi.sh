@@ -18,7 +18,7 @@ Help:
 
 Setup type:
    --elkserver		   install elk server
-   --rsyserver 		   install rsyslog server
+   --rsyserver 		   install rsyslog server [unimplemented]
    --client                install client
 
 Options:
@@ -29,7 +29,7 @@ Options:
    --ipr=IPv4		   set the rsyslog ip
    --java11                use java 11 instead of Java 8
    --meme=STRING	   set Xmx and Xms for elasticsearch [2G]
-   --meml=STRING	   set Xmx and Xms for logstash [1G]
+   --meml=STRING	   set Xmx and Xms for logstash [2G]
    --porte=PORT		   set elasticsearch port [9200]
    --portk=PORT		   set kibana port [5601]
    --portl=PORT		   set logstash input port [5044]
@@ -64,7 +64,7 @@ package_k="kibana"
 package_l="logstash"
 
 memE=2G
-memL=1G
+memL=2G
 ipE=localhost #default restrict access to Kibana
 ipK=
 ipR=
@@ -454,10 +454,6 @@ else
       if isUpToDate $packageF; then ${p} $packageF; fi
    else
       printf "\nInstall $packageF\n"
-      #cd /tmp
-      #curl -L -0 =https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.7.1-x86_64.rpm
-      #rpm -vi filebeat-7.7.1-x86_64.rpm
-      #rm -f filebeat-7.7.1-x86_64.rpm
 
       ${p} -y install filebeat
 
