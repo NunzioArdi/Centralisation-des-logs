@@ -39,8 +39,7 @@ Prenons cette exemple  `*.info;mail.none;authpriv.none;cron.none                
     - Pas de syntaxe indiqué, utilise celle définit par défaut
 
 #### Template
-Les modèles définissent où et comment seront enregistrer les logs. Ils peuvent utiliser des propriétés comme le nom du programme, qui sont [lister dans la documentation](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html "liste des propriétés")
- 
+Les modèles définissent où et comment seront enregistrés les logs. Ils peuvent utiliser des propriétés comme le nom du programme, l'ip du client, etc... (ils sont [lister dans la documentation](https://rsyslog.readthedocs.io/en/latest/configuration/properties.html "liste des propriétés"))
 
 Le premier donne l'emplacement. Il peut être statique ou dynamique. Pour définir un emplacement dynamique, il faut créer le modèle. Par exemple, pour le serveur, si l'on veut enregistrer tous les logs dans ce format `/var/log/clients/<FROMHOST-IP>/<PROGRAMNAME>.log` pour séparer les logs des différents serveurs, on doit rajouter d’abord rajouter la template, supprimer toutes les autres règles et puis indiquées dans la règle son nom.
 <br>Nouvelle syntaxe
