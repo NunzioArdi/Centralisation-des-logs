@@ -11,6 +11,7 @@ Si la configuration est sur un réseau fermé, penser à désactiver SELinux, le
 # sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 ```
 Un script est disponible pour installer automatiquement les logiciels sur Centos 7 et 8 (archive)
+La liste des choses que je n'ai pas pu finir dans le fichier [TODO](TODO.md).
 
 ## Source
 La plupart des informations proviennent des documentations officiel. Toutes les autres sources sont citées, soit à la fin du document, soit dans le texte.
