@@ -18,7 +18,7 @@ Help:
 
 Setup type:
    --elkserver		   install elk server
-   --rsyserver 		   install rsyslog server [unimplemented]
+   --rsyserver 		   install rsyslog server
    --client                install client
 
 Options:
@@ -43,7 +43,8 @@ showInfo(){
 cat <<EOF
 Install ELK stack v7 for centos
 Support centos 7 and 8 (systemd)
-Centos 6 is planned to be supported (firewall is not supported) (init.d is supported)
+Centos 6 is planned to be supported (firewall is not supported)
+  (rsyslog old version is not supported) (init.d is supported)
 Script version: $version
 EOF
 exit 0;
@@ -475,12 +476,54 @@ else
 fi
 
 if [ "$type" == "client" ];then
-   printf "\nRsyslog configuration\n"
+   printf "\nRsyslog client configuration\n"
    #rsyslog
    cp /etc/rsyslog.conf /etc/rsyslog.conf.back
    val=
    if [ "$rProtocol" == "UDP" ]; then val='@'; else val='@@'; fi
    echo "*.* $val$ipRsys" >>/etc/rsyslog.conf
+
+   if $systemd; then
+      systemctl restart rsyslog
+   else
+      service rsyslog restart
+   fi
+fi
+
+if [ "$type" == "rsyserver" ];then
+   printf "\nRsyslog server configuration\n"
+   #rsyslog
+   path="/etc/rsyslog.conf"
+   cp $path $path.back
+   val=
+   if [ "$rProtocol" == "UDP" ]; then val='imudp'; else val='imtcp'; fi
+
+cat <<EOF | tee $path
+module(load="imuxsock" SysSock.Use="off")
+module(load="imjournal" StateFile="imjournal.state")
+module(load="$val")
+input(type="$val" port="514")
+ 
+global(workDirectory="/var/lib/rsyslog")
+module(load="builtin:omfile" Template="RSYSLOG_SyslogProtocol23Format")
+include(file="/etc/rsyslog.d/*.conf" mode="optional")
+ 
+template(name="TmplMsg" type="list") {
+    constant(value="/var/log/clients/")
+    property(name="hostname")
+    constant(value="/")
+    property(name="programname" SecurePath="replace")
+    constant(value=".log")
+}
+
+template(name=LocalFile" type="string" string="/var/log/local/%programname%.log")
+if $fromhost-ip == '127.0.0.1' then {
+ action(type="omfile" dynafile="LocalFile")
+ stop
+}
+ 
+*.* ?TmplMsg
+EOF
 
    if $systemd; then
       systemctl restart rsyslog
