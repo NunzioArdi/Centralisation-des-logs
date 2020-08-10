@@ -55,7 +55,7 @@ template(name="splitHostname" type="list" {
 ```
 Ancienne syntaxe
 ```
-$template splitHostname,"/var/log/remote2/%FROMHOST-IP%/%PROGRAMNAME%.log"
+$template splitHostname,"/var/log/clients/%FROMHOST-IP%/%PROGRAMNAME%.log"
 *.* ?RemoteLogs
 ```
 Le point d'interrogation indique que la template est dynamique.
